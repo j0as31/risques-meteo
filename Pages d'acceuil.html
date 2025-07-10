@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tableau de Bord des Catastrophes Naturelles</title>
+    <!-- Inclure Tailwind CSS pour un style moderne et responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclure Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #e2e8f0; /* Un gris-bleu très clair pour le fond */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative; /* Pour positionner le logo absolu */
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem; /* Coins très arrondis */
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04); /* Ombre plus douce et plus grande */
+            padding: 3.5rem; /* Plus de padding */
+            width: 100%;
+            max-width: 1300px; /* Largeur maximale augmentée */
+            margin-top: 20px;
+            position: relative; /* Pour que les éléments absolus à l'intérieur soient relatifs à ce conteneur */
+            z-index: 10; /* Assure que le conteneur est au-dessus du fond */
+        }
+        .section-card {
+            background-color: #f8fafc; /* Fond légèrement différent pour les cartes de section */
+            border-radius: 1rem; /* Coins arrondis */
+            padding: 2.5rem; /* Plus de padding */
+            margin-top: 2.5rem; /* Plus d'espace entre les sections */
+            border: 1px solid #cbd5e1; /* Bordure plus douce */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05); /* Ombre subtile */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out; /* Transition plus douce */
+        }
+        .section-card:hover {
+            transform: translateY(-8px); /* Mouvement plus prononcé au survol */
+            box-shadow: 0 15px 20px -5px rgba(0, 0, 0, 0.15), 0 8px 10px -5px rgba(0, 0, 0, 0.08); /* Ombre plus forte au survol */
+        }
+        .alert-item {
+            background-color: #fff5f5; /* Rouge très clair */
+            border-left: 6px solid #ef4444; /* Bordure rouge plus épaisse */
+            padding: 1.5rem; /* Plus de padding */
+            margin-bottom: 1rem; /* Plus d'espace entre les alertes */
+            border-radius: 0.75rem; /* Coins plus arrondis */
+            font-size: 1.05rem; /* Taille de police légèrement plus grande */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08); /* Ombre subtile */
+        }
+        .alert-item strong {
+            color: #dc2626; /* Rouge plus foncé */
+            font-weight: 800; /* Très gras */
+        }
+        .daily-forecast-card {
+            background-color: #ffffff;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+            border: 1px solid #e2e8f0; /* Bordure légère */
+        }
+        .daily-forecast-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 10px rgba(0, 0, 0, 0.1);
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px; /* Plus d'espace en haut */
+            left: 30px; /* Plus d'espace à gauche */
+            z-index: 30; /* Assurez-vous qu'il est au-dessus de tout */
+        }
+        .logo-container img {
+            border-radius: 0.75rem; /* Coins plus arrondis */
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15); /* Ombre plus prononcée */
+            transition: transform 0.2s ease-in-out;
+        }
+        .logo-container img:hover {
+            transform: scale(1.1); /* Zoom plus important au survol */
+        }
+        /* Styles pour les titres */
+        h1 {
+            color: #2d3748; /* Un gris foncé pour les titres */
+        }
+        h2 {
+            color: #4a5568; /* Un gris un peu plus clair pour les sous-titres */
+        }
+        h3 {
+            color: #4a5568;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Logo cliquable pour revenir à l'accueil -->
+    <div class="logo-container">
+        <a href="index.html">
+            <!-- Utilisation d'une icône SVG simple pour un logo, plus léger qu'une image -->
+            <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6a1 1 0 10-2 0V6z" clip-rule="evenodd"></path>
+            </svg>
+            <!-- Alternative texte si le SVG ne s'affiche pas ou pour l'accessibilité -->
+            <span class="sr-only">Accueil</span>
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- Titre de la page -->
+        <h1 class="text-5xl font-extrabold text-gray-900 text-center mb-10">
+            Tableau de Bord des Catastrophes Naturelles
+        </h1>
+
+        <!-- Barre de navigation -->
+        <nav class="flex flex-wrap justify-center gap-6 mb-12 p-4 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full shadow-xl">
+            <a href="index.html" class="px-7 py-3 bg-blue-700 text-white font-bold rounded-full shadow-md hover:bg-blue-900 transition ease-in-out duration-300 transform hover:scale-105">
+                Accueil
+            </a>
+            <a href="earthquake_map.html" class="px-7 py-3 text-white font-semibold rounded-full hover:bg-blue-700 transition ease-in-out duration-300 transform hover:scale-105">
+                Carte des Séismes
+            </a>
+            <a href="country_info.html" class="px-7 py-3 text-white font-semibold rounded-full hover:bg-blue-700 transition ease-in-out duration-300 transform hover:scale-105">
+                Informations sur les Pays
+            </a>
+        </nav>
+
+        <!-- Section: Catastrophes Météorologiques à Proximité (GPS) -->
+        <div class="section-card">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Catastrophes Météorologiques à Proximité (GPS)</h2>
+            <div class="flex flex-col sm:flex-row items-center gap-6 mb-6">
+                <button id="getLocationButton" class="px-7 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 transition ease-in-out duration-300 transform hover:scale-105">
+                    Obtenir ma position et les alertes
+                </button>
+                <div id="locationInfo" class="text-gray-700 text-lg font-medium"></div>
+            </div>
+            <div id="weatherAlerts" class="mt-6">
+                <p class="text-gray-600 text-base">Cliquez sur le bouton pour obtenir les alertes météorologiques pour votre position actuelle.</p>
+            </div>
+        </div>
+
+        <!-- Section: Prévisions Météorologiques et Graphiques -->
+        <div class="section-card">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Prévisions Météorologiques (Prochaines 48h)</h2>
+            <div id="forecastLocationName" class="text-gray-700 font-semibold text-lg mb-4"></div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10">
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Température Horaire</h3>
+                    <canvas id="tempChart" class="w-full h-auto"></canvas>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Probabilité de Précipitation (5 jours)</h3>
+                    <canvas id="popChart" class="w-full h-auto"></canvas>
+                </div>
+            </div>
+            <div id="dailyForecastSummary" class="mt-10">
+                <h3 class="text-2xl font-bold text-gray-800 mb-6">Résumé des prévisions journalières:</h3>
+                <div id="dailyForecastContent" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-6">
+                    <!-- Les prévisions journalières seront insérées ici -->
+                </div>
+            </div>
+        </div>
+
+        <!-- Nouvelle Section: Séismes Significatifs Récents -->
+        <div class="section-card">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6">Séismes Significatifs Récents (Monde, 7 derniers jours)</h2>
+            <div id="recentEarthquakes" class="text-gray-700">
+                <p class="text-gray-600 text-base">Chargement des données sismiques...</p>
+            </div>
+        </div>
+
+        <!-- Message de chargement global -->
+        <div id="loading-message" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 text-white text-3xl font-bold rounded-lg hidden">
+            Chargement des données...
+        </div>
+
+        <!-- Message d'erreur/information -->
+        <div id="status-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold hidden">
+            <!-- Les messages d'erreur ou d'information seront affichés ici -->
+        </div>
+    </div>
+
+    <script>
+        // REMPLACEZ 'VOTRE_CLE_API_OPENWEATHER' par votre clé API OpenWeatherMap
+        const OPENWEATHER_API_KEY = "VOTRE_CLE_API_OPENWEATHER";
+
+        let tempChartInstance = null;
+        let popChartInstance = null;
+
+        function showStatusMessage(message, isError = false) {
+            const statusMessageDiv = document.getElementById('status-message');
+            statusMessageDiv.textContent = message;
+            statusMessageDiv.className = `fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold ${isError ? 'bg-red-600' : 'bg-blue-600'} text-white`;
+            statusMessageDiv.classList.remove('hidden');
+            setTimeout(() => {
+                statusMessageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function toggleLoading(show) {
+            document.getElementById('loading-message').classList.toggle('hidden', !show);
+        }
+
+        document.getElementById('getLocationButton').addEventListener('click', () => {
+            toggleLoading(true);
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(position => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    document.getElementById('locationInfo').textContent = `Votre position: Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+                    fetchWeatherAndAlerts(lat, lon);
+                }, error => {
+                    toggleLoading(false);
+                    let errorMessage = "Impossible d'obtenir votre position.";
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage += " Veuillez autoriser l'accès à la localisation dans les paramètres de votre navigateur.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage += " Informations de localisation non disponibles.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage += " La demande de localisation a expiré.";
+                            break;
+                        case error.UNKNOWN_ERROR:
+                            errorMessage += " Une erreur inconnue est survenue.";
+                            break;
+                    }
+                    showStatusMessage(errorMessage, true);
+                    document.getElementById('weatherAlerts').innerHTML = `<p class="text-red-500">${errorMessage}</p>`;
+                });
+            } else {
+                toggleLoading(false);
+                showStatusMessage("La géolocalisation n'est pas supportée par votre navigateur.", true);
+                document.getElementById('weatherAlerts').innerHTML = `<p class="text-red-500">La géolocalisation n'est pas supportée par votre navigateur.</p>`;
+            }
+        });
+
+        async function fetchWeatherAndAlerts(lat, lon) {
+            if (OPENWEATHER_API_KEY === "VOTRE_CLE_API_OPENWEATHER") {
+                toggleLoading(false);
+                showStatusMessage("Veuillez remplacer 'VOTRE_CLE_API_OPENWEATHER' par votre clé API OpenWeatherMap.", true);
+                document.getElementById('weatherAlerts').innerHTML = `<p class="text-red-500">Erreur: Clé API OpenWeatherMap non configurée.</p>`;
+                return;
+            }
+
+            const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,current&units=metric&lang=fr&appid=${OPENWEATHER_API_KEY}`;
+            const weatherAlertsDiv = document.getElementById('weatherAlerts');
+            const forecastLocationNameDiv = document.getElementById('forecastLocationName');
+            const dailyForecastContentDiv = document.getElementById('dailyForecastContent');
+
+            weatherAlertsDiv.innerHTML = '<p class="text-gray-500">Chargement des alertes...</p>';
+            forecastLocationNameDiv.textContent = 'Chargement des prévisions...';
+            dailyForecastContentDiv.innerHTML = '';
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+
+                forecastLocationNameDiv.textContent = `Prévisions pour Lat ${lat.toFixed(4)}, Lon ${lon.toFixed(4)}`;
+
+                if (data.alerts && data.alerts.length > 0) {
+                    weatherAlertsDiv.innerHTML = '<h3 class="text-xl font-semibold text-gray-800 mb-2">Alertes Actives:</h3>';
+                    data.alerts.forEach(alert => {
+                        const startTime = new Date(alert.start * 1000).toLocaleString();
+                        const endTime = new Date(alert.end * 1000).toLocaleString();
+                        weatherAlertsDiv.innerHTML += `
+                            <div class="alert-item">
+                                <strong>${alert.event}</strong> de ${alert.sender_name}<br>
+                                Début: ${startTime}<br>
+                                Fin: ${endTime}<br>
+                                <p class="mt-1 text-gray-700">${alert.description}</p>
+                            </div>
+                        `;
+                    });
+                } else {
+                    weatherAlertsDiv.innerHTML = '<p class="text-green-600">Aucune alerte météorologique active pour cette zone.</p>';
+                }
+
+                const hourlyData = data.hourly.slice(0, 48);
+                const labels = hourlyData.map(h => new Date(h.dt * 1000).getHours() + 'h');
+                const temperatures = hourlyData.map(h => h.temp);
+
+                if (tempChartInstance) {
+                    tempChartInstance.destroy();
+                }
+
+                const ctxTemp = document.getElementById('tempChart').getContext('2d');
+                tempChartInstance = new Chart(ctxTemp, {
+                    type: 'line',
+                    data: {
+                        labels: labels,
+                        datasets: [{
+                            label: 'Température (°C)',
+                            data: temperatures,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Température Horaire (°C) pour les 48 prochaines heures',
+                                font: { size: 16, weight: 'bold' },
+                                color: '#333'
+                            },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: false, title: { display: true, text: 'Température (°C)', font: { size: 14, weight: 'bold' }, color: '#555' }},
+                            x: { title: { display: true, text: 'Heure', font: { size: 14, weight: 'bold' }, color: '#555' }}
+                        }
+                    }
+                });
+
+                const dailyData = data.daily.slice(0, 5);
+                const popLabels = dailyData.map(day => new Date(day.dt * 1000).toLocaleDateString('fr-FR', { weekday: 'short' }));
+                const popData = dailyData.map(day => (day.pop * 100).toFixed(0));
+
+                if (popChartInstance) {
+                    popChartInstance.destroy();
+                }
+
+                const ctxPop = document.getElementById('popChart').getContext('2d');
+                popChartInstance = new Chart(ctxPop, {
+                    type: 'bar',
+                    data: {
+                        labels: popLabels,
+                        datasets: [{
+                            label: 'Probabilité de Précipitation (%)',
+                            data: popData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Probabilité de Précipitation (%) pour les 5 prochains jours',
+                                font: { size: 16, weight: 'bold' },
+                                color: '#333'
+                            },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, title: { display: true, text: 'Probabilité (%)', font: { size: 14, weight: 'bold' }, color: '#555' }},
+                            x: { title: { display: true, text: 'Jour', font: { size: 14, weight: 'bold' }, color: '#555' }}
+                        }
+                    }
+                });
+
+                dailyForecastContentDiv.innerHTML = '';
+                dailyData.forEach(day => {
+                    const date = new Date(day.dt * 1000).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                    const iconUrl = `https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`;
+                    dailyForecastContentDiv.innerHTML += `
+                        <div class="daily-forecast-card flex flex-col items-center text-center">
+                            <h4 class="font-bold text-gray-800 text-lg mb-2">${date}</h4>
+                            <img src="${iconUrl}" alt="${day.weather[0].description}" class="w-20 h-20 mb-2">
+                            <p class="text-gray-700 text-base mb-1">${day.weather[0].description}</p>
+                            <p class="text-xl font-semibold text-blue-700">Min: ${day.temp.min.toFixed(1)}°C</p>
+                            <p class="text-xl font-semibold text-red-700">Max: ${day.temp.max.toFixed(1)}°C</p>
+                            <p class="text-gray-600 text-sm mt-1">Prob. Pluie: ${(day.pop * 100).toFixed(0)}%</p>
+                        </div>
+                    `;
+                });
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données météorologiques:', error);
+                showStatusMessage(`Erreur lors du chargement des données météorologiques: ${error.message}`, true);
+                weatherAlertsDiv.innerHTML = `<p class="text-red-500">Impossible de charger les données météorologiques. ${error.message}</p>`;
+                forecastLocationNameDiv.textContent = '';
+                dailyForecastContentDiv.innerHTML = '';
+            } finally {
+                toggleLoading(false);
+            }
+        }
+
+        async function fetchRecentSignificantEarthquakes() {
+            const recentEarthquakesDiv = document.getElementById('recentEarthquakes');
+            const usgsApiUrl = 'https://earthquake.usgs.gov/earthquakes/feed/v1.0/summary/significant_week.geojson';
+
+            recentEarthquakesDiv.innerHTML = '<p class="text-gray-600 text-base">Chargement des séismes significatifs...</p>';
+
+            try {
+                const response = await fetch(usgsApiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+
+                if (data.features.length > 0) {
+                    let htmlContent = '<ul class="list-disc pl-5 space-y-3">'; // Plus d'espace entre les éléments
+                    data.features.slice(0, 10).forEach(eq => {
+                        const magnitude = eq.properties.mag;
+                        const place = eq.properties.place;
+                        const time = new Date(eq.properties.time).toLocaleString();
+                        const url = eq.properties.url;
+
+                        let magColor = 'text-gray-800';
+                        if (magnitude >= 7.0) magColor = 'text-red-700 font-extrabold'; /* Rouge plus foncé, très gras */
+                        else if (magnitude >= 6.0) magColor = 'text-orange-600 font-bold';
+                        else if (magnitude >= 5.0) magColor = 'text-yellow-600 font-semibold'; /* Jaune foncé */
+                        else magColor = 'text-gray-700'; /* Gris plus foncé */
+
+
+                        htmlContent += `
+                            <li>
+                                <span class="${magColor}">Magnitude ${magnitude}</span> - ${place} (${time})
+                                <a href="${url}" target="_blank" class="text-blue-600 hover:underline text-sm ml-2">Détails</a>
+                            </li>
+                        `;
+                    });
+                    htmlContent += '</ul>';
+                    recentEarthquakesDiv.innerHTML = htmlContent;
+                } else {
+                    recentEarthquakesDiv.innerHTML = '<p class="text-green-600">Aucun séisme significatif (> 4.5) enregistré la semaine dernière.</p>';
+                }
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des séismes significatifs:', error);
+                recentEarthquakesDiv.innerHTML = `<p class="text-red-500">Erreur lors du chargement des séismes significatifs: ${error.message}</p>`;
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            fetchRecentSignificantEarthquakes();
+        });
+    </script>
+</body>
+</html>
