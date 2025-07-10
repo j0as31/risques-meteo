@@ -1,0 +1,549 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informations sur les Pays</title>
+    <!-- Inclure Tailwind CSS pour un style moderne et responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclure Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #e2e8f0; /* Consistent background with the homepage */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 20px;
+            position: relative; /* For logo positioning */
+        }
+        .container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 3.5rem;
+            width: 100%;
+            max-width: 1200px; /* Increased max-width for more content */
+            margin-top: 20px;
+            position: relative;
+            z-index: 10;
+        }
+        .country-card {
+            border: 1px solid #cbd5e1;
+            border-radius: 1rem;
+            padding: 2.5rem;
+            margin-top: 2.5rem;
+            background-color: #f8fafc; /* Slightly different background for section cards */
+            display: flex;
+            flex-direction: column;
+            gap: 1.5rem; /* More space between elements */
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+        }
+        .country-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .country-card img {
+            max-width: 180px; /* Increased flag size */
+            height: auto;
+            border: 2px solid #e2e8f0; /* More visible border */
+            border-radius: 0.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            z-index: 30;
+        }
+        .logo-container img {
+            border-radius: 0.75rem;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease-in-out;
+        }
+        .logo-container img:hover {
+            transform: scale(1.1);
+        }
+        /* Styles for headings */
+        h1 {
+            color: #2d3748;
+        }
+        h2 {
+            color: #4a5568;
+        }
+        h3 {
+            color: #4a5568;
+        }
+        p b {
+            color: #334155; /* Darker color for labels */
+        }
+        .chart-container {
+            background-color: #ffffff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+        }
+        .seismic-event-item {
+            background-color: #f0f4f8; /* Light blue-gray */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #60a5fa; /* Blue border */
+        }
+        .weather-forecast-item {
+            background-color: #f0fdf4; /* Light green */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid #34d399; /* Green border */
+        }
+        .risk-disclaimer {
+            background-color: #fffbeb; /* Light yellow */
+            border-left: 4px solid #fbbf24; /* Yellow border */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            font-size: 0.95rem;
+            color: #78350f; /* Dark brown text */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Clickable logo to return to homepage -->
+    <div class="logo-container">
+        <a href="index.html">
+            <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6a1 1 0 10-2 0V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Home</span>
+        </a>
+    </div>
+
+    <div class="container">
+        <!-- Page title -->
+        <h1 class="text-4xl font-extrabold text-gray-900 text-center mb-8">
+            Informations sur les Pays
+        </h1>
+
+        <!-- Navigation bar -->
+        <nav class="flex flex-wrap justify-center gap-6 mb-10 p-4 bg-gradient-to-r from-blue-600 to-blue-800 rounded-full shadow-xl">
+            <a href="index.html" class="px-7 py-3 text-white font-semibold rounded-full hover:bg-blue-700 transition ease-in-out duration-300 transform hover:scale-105">
+                Accueil
+            </a>
+            <a href="earthquake_map.html" class="px-7 py-3 text-white font-semibold rounded-full hover:bg-blue-700 transition ease-in-out duration-300 transform hover:scale-105">
+                Carte des Séismes
+            </a>
+            <a href="country_info.html" class="px-7 py-3 bg-blue-700 text-white font-bold rounded-full shadow-md hover:bg-blue-900 transition ease-in-out duration-300 transform hover:scale-105">
+                Informations sur les Pays
+            </a>
+        </nav>
+
+        <!-- Country search section -->
+        <div class="flex flex-col sm:flex-row gap-6 mb-8 justify-center items-center bg-white p-6 rounded-lg shadow-md border border-gray-200">
+            <input type="text" id="countryInput" placeholder="Entrez le nom d'un pays (ex: France)"
+                   class="p-3 border border-gray-300 rounded-md w-full sm:w-2/3 text-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-150 ease-in-out">
+            <button id="searchButton"
+                    class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 transition ease-in-out duration-300 transform hover:scale-105 w-full sm:w-1/3">
+                Rechercher
+            </button>
+        </div>
+
+        <!-- Country info display area -->
+        <div id="countryInfo" class="country-card hidden">
+            <!-- Country information will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Message d'erreur/information -->
+        <div id="message" class="text-center text-red-600 mt-6 hidden p-3 rounded-lg bg-red-100 shadow-sm">
+            <!-- Error or information messages will be displayed here -->
+        </div>
+
+        <!-- Loading message -->
+        <div id="loading-message-country" class="text-center text-blue-600 mt-6 hidden text-lg font-semibold">
+            Chargement des informations...
+        </div>
+    </div>
+
+    <script>
+        // REMPLACEZ 'VOTRE_CLE_API_OPENWEATHER' par votre clé API OpenWeatherMap
+        const OPENWEATHER_API_KEY = "VOTRE_CLE_API_OPENWEATHER";
+
+        let seismicChartInstance = null; // Pour le graphique sismique
+        let weatherTempChartInstance = null; // Pour le graphique météo température
+        let weatherPopChartInstance = null; // Pour le graphique météo probabilité de précipitation
+
+        function displayMessage(text, isError = false) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `text-center mt-6 p-3 rounded-lg shadow-sm ${isError ? 'bg-red-100 text-red-700' : 'bg-blue-100 text-blue-700'}`;
+            messageDiv.classList.remove('hidden');
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Fonction pour récupérer et afficher les informations sismiques détaillées
+        async function fetchSeismicDataForCountry(lat, lon, countryName) {
+            const seismicInfoDiv = document.getElementById('seismicInfo');
+            seismicInfoDiv.innerHTML = '<p class="text-gray-600">Chargement des données sismiques...</p>';
+
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+
+            const startDate = formatDate(thirtyDaysAgo);
+            const endDate = formatDate(today);
+
+            const seismicApiUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${lat}&longitude=${lon}&maxradiuskm=1000&starttime=${startDate}&endtime=${endDate}&minmagnitude=2.5`;
+
+            try {
+                const response = await fetch(seismicApiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP sismique: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Préparer les données pour le graphique (nombre de séismes par jour)
+                const dailyCounts = {};
+                for (let i = 0; i < 30; i++) {
+                    const d = new Date();
+                    d.setDate(today.getDate() - i);
+                    dailyCounts[formatDate(d)] = 0;
+                }
+
+                let maxMagnitude = 0;
+                const recentEventsList = [];
+
+                data.features.forEach(eq => {
+                    const eqDate = formatDate(new Date(eq.properties.time));
+                    if (dailyCounts[eqDate] !== undefined) {
+                        dailyCounts[eqDate]++;
+                    }
+                    if (eq.properties.mag > maxMagnitude) {
+                        maxMagnitude = eq.properties.mag;
+                    }
+                    recentEventsList.push({
+                        magnitude: eq.properties.mag,
+                        place: eq.properties.place,
+                        time: new Date(eq.properties.time).toLocaleString(),
+                        url: eq.properties.url
+                    });
+                });
+
+                // Trier les événements récents par magnitude (du plus fort au plus faible)
+                recentEventsList.sort((a, b) => b.magnitude - a.magnitude);
+
+                const chartLabels = Object.keys(dailyCounts).sort();
+                const chartData = chartLabels.map(date => dailyCounts[date]);
+
+                if (seismicChartInstance) {
+                    seismicChartInstance.destroy();
+                }
+                const ctxSeismic = document.getElementById('seismicChart').getContext('2d');
+                seismicChartInstance = new Chart(ctxSeismic, {
+                    type: 'bar',
+                    data: {
+                        labels: chartLabels,
+                        datasets: [{
+                            label: 'Nombre de séismes (Mag > 2.5)',
+                            data: chartData,
+                            backgroundColor: 'rgba(75, 192, 192, 0.6)',
+                            borderColor: 'rgba(75, 192, 192, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: {
+                                display: true,
+                                text: 'Activité Sismique (30 derniers jours)',
+                                font: { size: 16, weight: 'bold' }
+                            },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, title: { display: true, text: 'Nombre de séismes' }},
+                            x: { title: { display: true, text: 'Date' }}
+                        }
+                    }
+                });
+
+                let seismicHtml = `
+                    <p class="text-lg mb-2"><b>Nombre total de séismes (Mag > 2.5):</b> <span class="font-semibold text-blue-700">${data.features.length}</span></p>
+                    <p class="text-lg mb-4"><b>Magnitude maximale:</b> <span class="font-semibold text-red-700">${maxMagnitude > 0 ? maxMagnitude : 'Aucun séisme > 2.5'}</span></p>
+                    <div class="chart-container mb-6">
+                        <canvas id="seismicChart"></canvas>
+                    </div>
+                `;
+
+                if (recentEventsList.length > 0) {
+                    seismicHtml += `<h4 class="text-xl font-semibold text-gray-800 mb-3">Séismes récents significatifs:</h4><ul class="list-disc pl-5 space-y-2">`;
+                    recentEventsList.slice(0, 5).forEach(event => { // Afficher les 5 plus significatifs
+                        let magColor = 'text-gray-700';
+                        if (event.magnitude >= 7.0) magColor = 'text-red-700 font-extrabold';
+                        else if (event.magnitude >= 6.0) magColor = 'text-orange-600 font-bold';
+                        else if (event.magnitude >= 5.0) magColor = 'text-yellow-600 font-semibold';
+
+                        seismicHtml += `
+                            <li class="seismic-event-item">
+                                <span class="${magColor}">Magnitude ${event.magnitude}</span> - ${event.place} (${event.time})
+                                <a href="${event.url}" target="_blank" class="text-blue-600 hover:underline text-sm ml-2">Détails</a>
+                            </li>
+                        `;
+                    });
+                    seismicHtml += `</ul>`;
+                } else {
+                    seismicHtml += `<p class="text-green-600">Aucun séisme significatif (> 2.5) enregistré dans les 30 derniers jours dans un rayon de 1000 km.</p>`;
+                }
+
+                seismicInfoDiv.innerHTML = seismicHtml;
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données sismiques:', error);
+                seismicInfoDiv.innerHTML = `<p class="text-red-500">Erreur lors du chargement de l'activité sismique: ${error.message}</p>`;
+            }
+        }
+
+        // Fonction pour récupérer et afficher les prévisions météorologiques
+        async function fetchWeatherForecastForCountry(lat, lon, countryName) {
+            const weatherForecastDiv = document.getElementById('weatherForecast');
+            weatherForecastDiv.innerHTML = '<p class="text-gray-600">Chargement des prévisions météorologiques...</p>';
+
+            if (OPENWEATHER_API_KEY === "VOTRE_CLE_API_OPENWEATHER") {
+                weatherForecastDiv.innerHTML = `<p class="text-red-500">Erreur: Clé API OpenWeatherMap non configurée. Veuillez la remplacer dans le code.</p>`;
+                return;
+            }
+
+            const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,current&units=metric&lang=fr&appid=${OPENWEATHER_API_KEY}`;
+
+            try {
+                const response = await fetch(apiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP météo: ${response.status}`);
+                }
+                const data = await response.json();
+
+                // Graphique de température horaire (prochaines 48h)
+                const hourlyData = data.hourly.slice(0, 48);
+                const tempLabels = hourlyData.map(h => new Date(h.dt * 1000).getHours() + 'h');
+                const temperatures = hourlyData.map(h => h.temp);
+
+                if (weatherTempChartInstance) {
+                    weatherTempChartInstance.destroy();
+                }
+                const ctxTemp = document.getElementById('weatherTempChart').getContext('2d');
+                weatherTempChartInstance = new Chart(ctxTemp, {
+                    type: 'line',
+                    data: {
+                        labels: tempLabels,
+                        datasets: [{
+                            label: 'Température (°C)',
+                            data: temperatures,
+                            borderColor: 'rgb(75, 192, 192)',
+                            tension: 0.1,
+                            fill: false
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: { display: true, text: 'Température Horaire (°C)' },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: false, title: { display: true, text: 'Température (°C)' }},
+                            x: { title: { display: true, text: 'Heure' }}
+                        }
+                    }
+                });
+
+                // Graphique de probabilité de précipitation (5 jours)
+                const dailyData = data.daily.slice(0, 5);
+                const popLabels = dailyData.map(day => new Date(day.dt * 1000).toLocaleDateString('fr-FR', { weekday: 'short' }));
+                const popData = dailyData.map(day => (day.pop * 100).toFixed(0));
+
+                if (weatherPopChartInstance) {
+                    weatherPopChartInstance.destroy();
+                }
+                const ctxPop = document.getElementById('weatherPopChart').getContext('2d');
+                weatherPopChartInstance = new Chart(ctxPop, {
+                    type: 'bar',
+                    data: {
+                        labels: popLabels,
+                        datasets: [{
+                            label: 'Probabilité de Précipitation (%)',
+                            data: popData,
+                            backgroundColor: 'rgba(54, 162, 235, 0.6)',
+                            borderColor: 'rgba(54, 162, 235, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            title: { display: true, text: 'Probabilité de Précipitation (%)' },
+                            legend: { display: false }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, max: 100, title: { display: true, text: 'Probabilité (%)' }},
+                            x: { title: { display: true, text: 'Jour' }}
+                        }
+                    }
+                });
+
+                let weatherHtml = `
+                    <h3 class="text-2xl font-bold text-gray-800 mb-4">Prévisions Météorologiques (Prochaines 48h)</h3>
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-6">
+                        <div class="chart-container">
+                            <canvas id="weatherTempChart"></canvas>
+                        </div>
+                        <div class="chart-container">
+                            <canvas id="weatherPopChart"></canvas>
+                        </div>
+                    </div>
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">Résumé des prévisions journalières:</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                `;
+                dailyData.forEach(day => {
+                    const date = new Date(day.dt * 1000).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                    const iconUrl = `https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`;
+                    const riskText = (day.wind_speed > 10 || day.pop > 0.5) ? '<span class="text-red-600 font-bold">Risque de tempête/pluie forte</span>' : '';
+
+                    weatherHtml += `
+                        <div class="weather-forecast-item flex flex-col items-center text-center">
+                            <h5 class="font-bold text-gray-800 text-lg mb-2">${date}</h5>
+                            <img src="${iconUrl}" alt="${day.weather[0].description}" class="w-16 h-16 mb-2">
+                            <p class="text-gray-700 text-base mb-1">${day.weather[0].description}</p>
+                            <p class="text-lg font-semibold text-blue-700">Min: ${day.temp.min.toFixed(1)}°C</p>
+                            <p class="text-lg font-semibold text-red-700">Max: ${day.temp.max.toFixed(1)}°C</p>
+                            <p class="text-gray-600 text-sm mt-1">Prob. Pluie: ${(day.pop * 100).toFixed(0)}%</p>
+                            <p class="text-gray-600 text-sm">Vent: ${day.wind_speed.toFixed(1)} m/s</p>
+                            ${riskText ? `<p class="mt-2 text-sm">${riskText}</p>` : ''}
+                        </div>
+                    `;
+                });
+                weatherHtml += `</div>`;
+                weatherForecastDiv.innerHTML = weatherHtml;
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données météorologiques:', error);
+                weatherForecastDiv.innerHTML = `<p class="text-red-500">Erreur lors du chargement des prévisions météorologiques: ${error.message}</p>`;
+            }
+        }
+
+        // Fonction principale pour récupérer et afficher les informations d'un pays
+        async function getCountryInfo(countryName) {
+            const countryInfoDiv = document.getElementById('countryInfo');
+            const loadingMessage = document.getElementById('loading-message-country');
+            const messageDiv = document.getElementById('message');
+
+            countryInfoDiv.classList.add('hidden');
+            messageDiv.classList.add('hidden');
+            loadingMessage.classList.remove('hidden');
+
+            try {
+                const response = await fetch(`https://restcountries.com/v3.1/name/${countryName}?fullText=true`);
+                
+                if (!response.ok) {
+                    if (response.status === 404) {
+                        displayMessage(`Pays "${countryName}" non trouvé. Veuillez vérifier l'orthographe.`, true);
+                    } else {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    return;
+                }
+
+                const data = await response.json();
+                const country = data[0];
+
+                // Contenu HTML pour les informations générales du pays
+                let countryHtml = `
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start mb-6 gap-6">
+                        <img src="${country.flags.png}" alt="Drapeau de ${country.name.common}" class="w-32 h-auto rounded-lg shadow-md border border-gray-200">
+                        <h2 class="text-3xl font-bold text-gray-900">${country.name.common}</h2>
+                    </div>
+                    <p class="text-lg"><b>Capitale:</b> ${country.capital ? country.capital[0] : 'N/A'}</p>
+                    <p class="text-lg"><b>Région:</b> ${country.region}</p>
+                    <p class="text-lg"><b>Sous-région:</b> ${country.subregion || 'N/A'}</p>
+                    <p class="text-lg"><b>Population:</b> ${country.population.toLocaleString('fr-FR')}</p>
+                    <p class="text-lg"><b>Superficie:</b> ${country.area.toLocaleString('fr-FR')} km²</p>
+                    <p class="text-lg"><b>Langues:</b> ${Object.values(country.languages || {}).map(lang => lang.name || lang).join(', ') || 'N/A'}</p>
+                    <p class="text-lg"><b>Monnaies:</b> ${Object.values(country.currencies || {}).map(c => c.name).join(', ') || 'N/A'}</p>
+                    <p class="text-lg"><b>Fuseaux horaires:</b> ${country.timezones.join(', ')}</p>
+                    <p class="text-lg"><b>Domaine de premier niveau:</b> ${country.tld ? country.tld[0] : 'N/A'}</p>
+                `;
+
+                // Ajout des sections pour les données sismiques et météorologiques
+                countryHtml += `
+                    <div class="seismic-info mt-6 pt-6 border-t-2 border-gray-200">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Activité Sismique Récente</h3>
+                        <div id="seismicInfo"></div>
+                    </div>
+                    <div class="weather-forecast mt-6 pt-6 border-t-2 border-gray-200">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Prévisions Météorologiques</h3>
+                        <div id="weatherForecast"></div>
+                    </div>
+                    <div class="risk-disclaimer mt-6">
+                        <p><strong>Note sur les prévisions de catastrophes:</strong> Les informations présentées ici sont basées sur des données météorologiques et sismiques récentes et des prévisions générales. Il est impossible de prédire avec exactitude les catastrophes naturelles futures (séismes, tsunamis, ouragans spécifiques, etc.) ou d'attribuer un pourcentage de chance fiable à leur occurrence. Ces données doivent être utilisées à titre informatif et ne remplacent pas les avertissements officiels des autorités compétentes.</p>
+                    </div>
+                `;
+
+                countryInfoDiv.innerHTML = countryHtml;
+                countryInfoDiv.classList.remove('hidden');
+                displayMessage(`Informations pour ${country.name.common} chargées avec succès.`, false);
+
+                // Appeler les fonctions pour charger les données sismiques et météo après que le HTML soit inséré
+                if (country.latlng && country.latlng.length === 2) {
+                    fetchSeismicDataForCountry(country.latlng[0], country.latlng[1], country.name.common);
+                    fetchWeatherForecastForCountry(country.latlng[0], country.latlng[1], country.name.common);
+                } else {
+                    document.getElementById('seismicInfo').innerHTML = `<p class="text-gray-600">Coordonnées de la capitale non disponibles pour l'activité sismique.</p>`;
+                    document.getElementById('weatherForecast').innerHTML = `<p class="text-gray-600">Coordonnées de la capitale non disponibles pour les prévisions météorologiques.</p>`;
+                }
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des informations du pays:', error);
+                displayMessage(`Une erreur est survenue lors du chargement des données. Détails: ${error.message}`, true);
+            } finally {
+                loadingMessage.classList.add('hidden');
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const countryInput = document.getElementById('countryInput');
+            const searchButton = document.getElementById('searchButton');
+
+            searchButton.addEventListener('click', () => {
+                const countryName = countryInput.value.trim();
+                if (countryName) {
+                    getCountryInfo(countryName);
+                } else {
+                    displayMessage("Veuillez entrer le nom d'un pays.", true);
+                }
+            });
+
+            countryInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
