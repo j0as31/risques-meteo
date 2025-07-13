@@ -1,0 +1,927 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Informations sur les Pays</title>
+    <!-- Inclure Tailwind CSS pour un style moderne et responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclure Chart.js pour les graphiques -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f4f8; /* Consistent background with the homepage */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0; /* Remove body padding for hero section */
+            position: relative;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Dégradé de bleu-violet */
+            color: white;
+            padding: 6rem 20px; /* Plus de padding pour un effet plus grand */
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Ombre plus prononcée */
+            position: relative;
+            z-index: 1;
+        }
+        .hero-section h1 {
+            color: white; /* Ensure title is white on hero section */
+        }
+        .nav-button {
+            background: rgba(255, 255, 255, 0.15); /* Fond semi-transparent */
+            backdrop-filter: blur(5px); /* Effet de flou */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Bordure légère */
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.75rem;
+            border-radius: 9999px; /* Full rounded */
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        .nav-button.active {
+            background-color: #ffffff;
+            color: #667eea; /* Couleur du dégradé pour le texte actif */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            z-index: 30;
+        }
+        .logo-container svg {
+            border-radius: 0.75rem;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease-in-out;
+            background-color: #ffffff;
+            padding: 5px;
+        }
+        .logo-container svg:hover {
+            transform: scale(1.1);
+        }
+
+        /* Main content container style */
+        .main-content-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 3.5rem;
+            width: 100%;
+            max-width: 1300px;
+            margin-top: -80px; /* Overlap with hero section */
+            position: relative;
+            z-index: 2;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Section card style (consistent with homepage) */
+        .section-card {
+            background-color: #fdfefe; /* Almost white for cards */
+            border-radius: 1.25rem; /* Even more rounded corners */
+            padding: 2.5rem;
+            margin-top: 2.5rem;
+            border: 1px solid #e0e7ee; /* Very light border */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08); /* Sharper shadow */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            width: 100%;
+        }
+        .section-card:hover {
+            transform: translateY(-10px); /* More pronounced movement on hover */
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+        }
+
+        /* Chart container style */
+        .chart-container {
+            background-color: #ffffff;
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            height: 350px; /* Adjusted fixed height for charts */
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+        .chart-container canvas {
+            max-height: 100%; /* Ensure canvas doesn't overflow container */
+            width: 100% !important; /* Override Chart.js inline style if needed */
+            height: 100% !important; /* Override Chart.js inline style if needed */
+        }
+
+        .seismic-event-item, .weather-forecast-item, .risk-item {
+            background-color: #f0f4f8; /* Light blue-gray */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+            border-left: 4px solid; /* Will be set by JS for specific colors */
+            word-wrap: break-word; /* Ensure long text breaks within the bubble */
+            overflow-wrap: break-word; /* Modern equivalent for word-wrap */
+            overflow: hidden; /* Hide anything that still overflows */
+        }
+
+        /* Target specific text elements within these items to ensure wrapping */
+        .seismic-event-item p,
+        .seismic-event-item span,
+        .seismic-event-item a, /* Also apply to links within */
+        .weather-forecast-item p,
+        .weather-forecast-item span,
+        .weather-forecast-item h5,
+        .risk-item p,
+        .risk-item span {
+            word-wrap: break-word;
+            overflow-wrap: break-word;
+            white-space: normal; /* Ensure text wrapping is enabled */
+            max-width: 100%; /* Ensure text elements don't exceed parent width */
+            box-sizing: border-box; /* Include padding and border in the element's total width and height */
+        }
+
+        .risk-disclaimer {
+            background-color: #fffbeb; /* Light yellow */
+            border-left: 4px solid #fbbf24; /* Yellow border */
+            padding: 1.5rem;
+            border-radius: 0.75rem;
+            margin-top: 2rem;
+            font-size: 0.95rem;
+            color: #78350f; /* Dark brown text */
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        /* Loading and message styles */
+        #loading-message-country {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+            border-radius: 1rem;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #loading-message-country.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #dc2626;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 40;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Clickable logo to return to homepage -->
+    <div class="logo-container">
+        <a href="index.html">
+            <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6a1 1 0 10-2 0V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Accueil</span>
+        </a>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 animate-fade-in-up">
+            Informations sur les Pays
+        </h1>
+        <p class="text-xl md:text-2xl font-light mb-8 animate-fade-in-up delay-100">
+            Explorez les données géographiques et les risques naturels par pays.
+        </p>
+        <!-- Barre de navigation intégrée à la hero section -->
+        <nav class="flex flex-wrap justify-center gap-4 animate-fade-in-up delay-200">
+            <a href="index.html" class="nav-button">
+                Accueil
+            </a>
+            <a href="earthquake_map.html" class="nav-button">
+                Carte des Séismes
+            </a>
+            <a href="country_info.html" class="nav-button active">
+                Informations sur les Pays
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main content container -->
+    <div class="main-content-container">
+        <!-- Country search section (moved to top) -->
+        <div class="section-card">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Rechercher un Pays</h2>
+            <div class="flex flex-col sm:flex-row gap-6 justify-center items-center">
+                <input type="text" id="countryInput" placeholder="Entrez le nom d'un pays (ex: France ou USA)"
+                       class="p-3 border border-gray-300 rounded-md w-full sm:w-2/3 text-lg focus:outline-none focus:ring-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                <button id="searchButton"
+                        class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 transition ease-in-out duration-300 transform hover:scale-105 w-full sm:w-1/3">
+                    Rechercher
+                </button>
+            </div>
+            <p class="text-sm text-gray-500 text-center mt-2">Essayez le nom en français ou en anglais. Ex: "Allemagne" ou "Germany".</p>
+        </div>
+
+        <!-- Country info display area (hidden by default, shown after search) -->
+        <div id="countryInfo" class="section-card hidden">
+            <!-- Country information will be inserted here by JavaScript -->
+        </div>
+
+        <!-- Global Dashboards Section (moved below search) -->
+        <div id="globalDashboards" class="section-card mt-8">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Statistiques Globales des Séismes (30 derniers jours)</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="chart-container">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Top 10 des Pays par Nombre de Séismes</h3>
+                    <canvas id="topCountriesChart"></canvas>
+                    <p id="topCountriesLoading" class="text-gray-600 text-center mt-4">Chargement des données...</p>
+                </div>
+                <div class="chart-container">
+                    <h3 class="text-xl font-bold text-gray-800 mb-4">Distribution des Magnitudes des Séismes</h3>
+                    <canvas id="magnitudeDistributionChart"></canvas>
+                    <p id="magnitudeLoading" class="text-gray-600 text-center mt-4">Chargement des données...</p>
+                </div>
+            </div>
+            <div class="risk-disclaimer mt-8">
+                <p><strong>Note sur les données globales:</strong> Ces graphiques représentent l'activité sismique significative ($ > 2.5 $) enregistrée par l'USGS au cours des 30 derniers jours. Les données sur d'autres types de catastrophes naturelles (tsunamis historiques détaillés, inondations, sécheresses, tempêtes spécifiques) ne sont pas facilement disponibles via des APIs publiques pour des analyses globales et comparatives en temps réel.</p>
+            </div>
+        </div>
+
+        <!-- Loading message for country search -->
+        <div id="loading-message-country" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-content: center; z-index: 50; color: white; font-size: 2.5rem; font-weight: bold; border-radius: 1rem; transition: opacity 0.3s ease-in-out; hidden">
+            Chargement des informations...
+        </div>
+
+        <!-- Error/Information message -->
+        <div id="message" class="fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold hidden">
+            <!-- Error or information messages will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        // VOTRE CLÉ API OpenWeatherMap
+        // Assurez-vous que cette clé est correcte et active.
+        // Vous pouvez obtenir une clé gratuite ici : https://openweathermap.org/api
+        // IMPORTANT : Une nouvelle clé peut prendre jusqu'à 2 heures pour être activée.
+        const OPENWEATHER_API_KEY = "07198a0a2755cea1b53587e16ee24370"; 
+
+        // Définitions des listes de pays pour les risques (déplacées en dehors des fonctions pour être globales)
+        const pacificRingOfFireCountries = [
+            "Chile", "Peru", "Ecuador", "Colombia", "Panama", "Costa Rica", "Nicaragua",
+            "El Salvador", "Honduras", "Guatemala", "Mexico", "United States", "Canada",
+            "Russia", "Japan", "Philippines", "Indonesia", "Papua New Guinea", "New Zealand",
+            "Fiji", "Tonga", "Samoa", "Solomon Islands", "Vanuatu", "Taiwan", "Brunei", "Timor-Leste"
+        ];
+        const IndianOceanRimCountries = [
+            "Australia", "Bangladesh", "India", "Indonesia", "Kenya", "Madagascar", "Malaysia", "Maldives",
+            "Mauritius", "Mozambique", "Myanmar", "Oman", "Pakistan", "Seychelles", "Singapore", "Somalia",
+            "South Africa", "Sri Lanka", "Tanzania", "Thailand", "Timor-Leste", "United Arab Emirates", "Yemen"
+        ];
+        const MediterraneanCountries = [
+            "Albania", "Algeria", "Bosnia and Herzegovina", "Croatia", "Cyprus", "Egypt", "France", "Greece",
+            "Israel", "Italy", "Lebanon", "Libya", "Malta", "Monaco", "Montenegro", "Morocco", "Slovenia",
+            "Spain", "Syria", "Tunisia", "Turkey"
+        ];
+        const AtlanticOceanCountries = [
+            "United States", "Canada", "Mexico", "Brazil", "Argentina", "United Kingdom", "Ireland", "France",
+            "Spain", "Portugal", "Norway", "Iceland", "Greenland", "Nigeria", "South Africa", "Angola", "Colombia",
+            "Venezuela", "Guyana", "Suriname", "French Guiana", "Cuba", "Dominican Republic", "Haiti", "Jamaica",
+            "Bahamas", "Barbados", "Trinidad and Tobago"
+        ];
+
+
+        let seismicChartInstance = null; // Pour le graphique sismique par pays
+        let weatherTempChartInstance = null; // Pour le graphique météo température par pays
+        let weatherPopChartInstance = null; // Pour le graphique météo probabilité de précipitation par pays
+        let topCountriesChartInstance = null; // Pour le graphique global des pays par séismes
+        let magnitudeDistributionChartInstance = null; // Pour le graphique global de distribution des magnitudes
+
+        function displayMessage(text, isError = false) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold ${isError ? 'bg-red-600' : 'bg-blue-600'} text-white`;
+            messageDiv.classList.remove('hidden');
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function toggleLoadingCountry(show) {
+            document.getElementById('loading-message-country').classList.toggle('hidden', !show);
+        }
+
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Fonction pour récupérer et afficher les informations sismiques détaillées pour un pays
+        async function fetchSeismicDataForCountry(lat, lon, countryName) {
+            const seismicInfoDiv = document.getElementById('seismicInfo');
+            seismicInfoDiv.innerHTML = '<p class="text-gray-600">Chargement des données sismiques...</p>';
+
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+
+            const startDate = formatDate(thirtyDaysAgo);
+            const endDate = formatDate(today);
+
+            // maxradiuskm ajusté pour une zone plus locale autour de la capitale
+            const seismicApiUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&latitude=${lat}&longitude=${lon}&maxradiuskm=500&starttime=${startDate}&endtime=${endDate}&minmagnitude=2.5`;
+
+            try {
+                const response = await fetch(seismicApiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP sismique: ${response.status}`);
+                }
+                const data = await response.json();
+
+                const recentEventsList = [];
+                data.features.forEach(eq => {
+                    recentEventsList.push({
+                        magnitude: eq.properties.mag,
+                        place: eq.properties.place,
+                        time: new Date(eq.properties.time).toLocaleString('fr-FR'),
+                        url: eq.properties.url
+                    });
+                });
+
+                recentEventsList.sort((a, b) => b.magnitude - a.magnitude); // Trier par magnitude
+
+                let seismicHtml = `
+                    <p class="text-lg mb-2"><b>Nombre total de séismes (Mag > 2.5, 500km):</b> <span class="font-semibold text-blue-700">${data.features.length}</span></p>
+                `;
+
+                if (recentEventsList.length > 0) {
+                    seismicHtml += `<h4 class="text-xl font-semibold text-gray-800 mb-3">Séismes récents significatifs à proximité:</h4><ul class="list-disc pl-5 space-y-2">`;
+                    recentEventsList.slice(0, 5).forEach(event => { // Afficher les 5 plus significatifs
+                        let magColor = 'text-gray-700';
+                        if (event.magnitude >= 7.0) magColor = 'text-red-700 font-extrabold';
+                        else if (event.magnitude >= 6.0) magColor = 'text-orange-600 font-bold';
+                        else if (event.magnitude >= 5.0) magColor = 'text-yellow-600 font-semibold';
+
+                        seismicHtml += `
+                            <li class="seismic-event-item">
+                                <span class="${magColor}">Magnitude ${event.magnitude}</span> - ${event.place} (${event.time})
+                                <a href="${event.url}" target="_blank" class="text-blue-600 hover:underline text-sm ml-2">Détails</a>
+                            </li>
+                        `;
+                    });
+                    seismicHtml += `</ul>`;
+                } else {
+                    seismicHtml += `<p class="text-green-600">Aucun séisme significatif ($ > 2.5 $) enregistré dans les 30 derniers jours dans un rayon de 500 km de la capitale.</p>`;
+                }
+
+                seismicInfoDiv.innerHTML = seismicHtml;
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données sismiques pour le pays:', error);
+                seismicInfoDiv.innerHTML = `<p class="text-red-500">Erreur lors du chargement de l'activité sismique pour ce pays: ${error.message}</p>`;
+            }
+        }
+
+        // Fonction pour récupérer et afficher les prévisions météorologiques pour un pays
+        async function fetchWeatherForecastForCountry(lat, lon) {
+            const weatherForecastDiv = document.getElementById('weatherForecast');
+            weatherForecastDiv.innerHTML = '<p class="text-gray-600">Chargement des prévisions météorologiques...</p>';
+
+            if (OPENWEATHER_API_KEY === "VOTRE_CLE_API_OPENWEATHER" || !OPENWEATHER_API_KEY) {
+                weatherForecastDiv.innerHTML = `<p class="text-red-500">Erreur: Clé API OpenWeatherMap non configurée ou invalide. Veuillez la remplacer dans le code.</p>`;
+                console.error("Erreur: La clé API OpenWeatherMap est manquante ou incorrecte.");
+                return;
+            }
+
+            const apiUrl = `https://api.openweathermap.org/data/3.0/onecall?lat=${lat}&lon=${lon}&exclude=minutely,current&units=metric&lang=fr&appid=${OPENWEATHER_API_KEY}`;
+            
+            console.log("Tentative de récupération des données météo pour:", lat, lon);
+            console.log("URL de l'API OpenWeatherMap:", apiUrl);
+
+            try {
+                const response = await fetch(apiUrl);
+                console.log("Réponse de l'API OpenWeatherMap - Statut:", response.status, response.statusText);
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    console.error(`Erreur HTTP OpenWeatherMap: ${response.status} - ${response.statusText}`, errorText);
+                    let userMessage = `Erreur lors du chargement des données météorologiques: ${response.status} - ${response.statusText}.`;
+                    if (response.status === 401) {
+                        userMessage = "Erreur d'authentification OpenWeatherMap (401). Votre clé API est peut-être incorrecte ou inactive. Une nouvelle clé peut prendre jusqu'à 2 heures pour être activée. Veuillez vérifier sur le site d'OpenWeatherMap et réessayer plus tard.";
+                    } else if (response.status === 429) {
+                        userMessage = "Trop de requêtes OpenWeatherMap (429). Vous avez peut-être dépassé les limites de votre clé API. Réessayez plus tard.";
+                    }
+                    weatherForecastDiv.innerHTML = `<p class="text-red-500">${userMessage}</p>`;
+                    return;
+                }
+
+                const data = await response.json();
+                console.log("Données météo reçues:", data);
+
+                let weatherHtml = `
+                    <h4 class="text-xl font-semibold text-gray-800 mb-3">Prévisions Météorologiques (Prochaines 5 jours):</h4>
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                `;
+                const dailyData = data.daily.slice(0, 5); // 5 prochains jours
+                dailyData.forEach(day => {
+                    const date = new Date(day.dt * 1000).toLocaleDateString('fr-FR', { weekday: 'long', day: 'numeric', month: 'long' });
+                    const iconUrl = `https://openweathermap.org/img/wn/${day.weather[0].icon}@2x.png`;
+                    const riskText = (day.wind_speed > 10 || day.pop > 0.5) ? '<span class="text-red-600 font-bold">Risque de tempête/pluie forte</span>' : '';
+
+                    weatherHtml += `
+                        <div class="weather-forecast-item flex flex-col items-center text-center">
+                            <h5 class="font-bold text-gray-800 text-lg mb-2">${date}</h5>
+                            <img src="${iconUrl}" alt="${day.weather[0].description}" class="w-16 h-16 mb-2">
+                            <p class="text-gray-700 text-base mb-1">${day.weather[0].description}</p>
+                            <p class="text-lg font-semibold text-blue-700">Min: ${day.temp.min.toFixed(1)}°C</p>
+                            <p class="text-lg font-semibold text-red-700">Max: ${day.temp.max.toFixed(1)}°C</p>
+                            <p class="text-gray-600 text-sm mt-1">Prob. Pluie: ${(day.pop * 100).toFixed(0)}%</p>
+                            <p class="text-gray-600 text-sm">Vent: ${day.wind_speed.toFixed(1)} m/s</p>
+                            ${riskText ? `<p class="mt-2 text-sm">${riskText}</p>` : ''}
+                        </div>
+                    `;
+                });
+                weatherHtml += `</div>`;
+                weatherForecastDiv.innerHTML = weatherHtml;
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des données météorologiques pour le pays:', error);
+                weatherForecastDiv.innerHTML = `<p class="text-red-500">Erreur lors du chargement des prévisions météorologiques pour ce pays: ${error.message}</p>`;
+            }
+        }
+
+        // Fonction pour déterminer le risque de tsunami basé sur la géographie
+        function getTsunamiRisk(country) {
+            const oceanicCountries = [
+                "Japan", "Indonesia", "Philippines", "Chile", "Peru", "Mexico", "United States", "Canada",
+                "New Zealand", "Australia", "Papua New Guinea", "Fiji", "Solomon Islands", "Vanuatu",
+                "Tonga", "Samoa", "Tuvalu", "Kiribati", "Marshall Islands", "Micronesia", "Nauru", "Palau",
+                "Timor-Leste", "Russia", "China", "South Korea", "North Korea", "Taiwan", "Vietnam",
+                "Thailand", "Malaysia", "Singapore", "Brunei", "Sri Lanka", "India", "Bangladesh",
+                "Myanmar", "Pakistan", "Iran", "Oman", "Yemen", "Saudi Arabia", "Egypt", "Sudan",
+                "Eritrea", "Djibouti", "Somalia", "Kenya", "Tanzania", "Mozambique", "Madagascar",
+                "South Africa", "France", "Spain", "Portugal", "Italy", "Greece", "Turkey", "Syria",
+                "Lebanon", "Israel", "Cyprus", "Malta", "Croatia", "Albania", "Montenegro", "Bosnia and Herzegovina",
+                "Slovenia", "Germany", "United Kingdom", "Ireland", "Norway", "Sweden", "Finland", "Denmark",
+                "Iceland", "Greenland", "Argentina", "Colombia", "Ecuador", "El Salvador", "Guatemala", "Honduras",
+                "Nicaragua", "Panama", "Costa Rica", "Cuba", "Dominican Republic", "Haiti", "Jamaica",
+                "Bahamas", "Barbados", "Trinidad and Tobago", "Venezuela", "Guyana", "Suriname", "French Guiana",
+                "Morocco", "Algeria", "Tunisia", "Libya"
+            ];
+            
+
+            const commonName = country.name.common;
+            let riskLevel = "Très faible";
+            let riskReason = "Pays enclavé ou avec une exposition très limitée aux zones génératrices de tsunamis. Le risque est minime.";
+
+            if (pacificRingOfFireCountries.includes(commonName)) {
+                riskLevel = "Élevé";
+                riskReason = "Situé sur la Ceinture de feu du Pacifique, ce pays est très exposé aux séismes majeurs et aux tsunamis destructeurs qui en découlent. Une vigilance constante est requise.";
+            } else if (IndianOceanRimCountries.includes(commonName)) {
+                riskLevel = "Modéré à élevé";
+                riskReason = "Pays riverain de l'océan Indien, exposé aux tsunamis générés par des séismes sous-marins majeurs dans la région, comme celui de 2004.";
+            } else if (MediterraneanCountries.includes(commonName)) {
+                riskLevel = "Modéré";
+                riskReason = "Pays méditerranéen. Le risque de tsunami est présent, principalement dû à des séismes locaux ou des glissements de terrain sous-marins dans la mer Méditerranée, bien que moins fréquent que dans le Pacifique.";
+            } else if (AtlanticOceanCountries.includes(commonName) && country.latlng && (country.latlng[0] < 60 || country.latlng[0] > -60)) { // Exclure les zones polaires pour les tsunamis "océaniques"
+                riskLevel = "Faible à modéré";
+                riskReason = "Pays côtier de l'océan Atlantique. Le risque de tsunamis est généralement faible, mais des événements locaux (glissements de terrain) ou des tsunamis transocéaniques rares (ex: séisme de Lisbonne 1755) peuvent survenir.";
+            } else if (country.continents && country.continents.includes("Antarctica")) {
+                riskLevel = "Très faible";
+                riskReason = "Situé en Antarctique, le risque de tsunami est négligeable pour les activités humaines, bien que des tsunamis puissent être générés par des événements glaciaires.";
+            } else if (country.landlocked) {
+                riskLevel = "Très faible";
+                riskReason = "Pays enclavé, sans accès à la mer, le risque de tsunami est inexistant.";
+            }
+
+            return { level: riskLevel, reason: riskReason };
+        }
+
+        // Fonction pour évaluer les risques de catastrophes générales
+        function getGeneralDisasterRisk(country) {
+            const commonName = country.name.common;
+            const region = country.region;
+            const subregion = country.subregion;
+            const risks = [];
+
+            // Risques liés aux séismes (déjà couvert par la section sismique, mais peut être mentionné comme risque général)
+            if (pacificRingOfFireCountries.includes(commonName)) {
+                risks.push("Séismes fréquents et intenses");
+            }
+
+            // Risques liés aux conditions météorologiques et climatiques
+            if (["Caribbean", "Central America", "North America"].includes(subregion) || ["United States", "Mexico", "Cuba", "Haiti", "Dominican Republic", "Jamaica", "Bahamas"].includes(commonName)) {
+                risks.push("Ouragans et tempêtes tropicales (saisonniers)");
+            }
+            if (["South Asia", "Southeast Asia"].includes(subregion) || ["India", "Bangladesh", "Myanmar", "Thailand", "Vietnam", "Philippines", "Indonesia"].includes(commonName)) {
+                risks.push("Inondations (moussons), Cyclones tropicaux");
+            }
+            if (["Sub-Saharan Africa", "Southern Asia"].includes(subregion) || ["Ethiopia", "Somalia", "Kenya", "Sudan", "India", "Pakistan"].includes(commonName)) {
+                risks.push("Sécheresses fréquentes et prolongées");
+            }
+            if (["Oceania"].includes(region) || ["Australia", "New Zealand"].includes(commonName)) {
+                risks.push("Incendies de forêt (saisonniers), Sécheresses, Cyclones");
+            }
+            if (["Europe"].includes(region)) {
+                risks.push("Vagues de chaleur/froid, Inondations (crues fluviales), Tempêtes");
+            }
+            if (["North America"].includes(subregion) && ["United States", "Canada"].includes(commonName)) {
+                risks.push("Tornades (notamment aux USA), Blizzards (zones nordiques)");
+            }
+            if (["South America"].includes(region)) {
+                risks.push("Inondations, Glissements de terrain, Sécheresses");
+            }
+
+            // Risques géologiques (autres que séismes majeurs et tsunamis)
+            if (country.latlng && (country.latlng[0] > 40 || country.latlng[0] < -40) && !country.landlocked) { // Pays côtiers à hautes latitudes
+                risks.push("Tempêtes côtières intenses");
+            }
+            // Volcanisme (très difficile à évaluer sans API spécifique, donc basé sur des pays connus)
+            if (["Indonesia", "Japan", "Philippines", "Chile", "Ecuador", "Italy", "Iceland", "United States"].includes(commonName)) {
+                risks.push("Activité volcanique");
+            }
+
+            // Risques généraux liés à la géographie ou la démographie
+            if (country.population > 50000000 && country.area < 500000) { // Pays densément peuplés
+                risks.push("Risques accrus liés à la densité de population");
+            }
+            if (country.landlocked) {
+                risks.push("Dépendance aux pays voisins pour l'aide en cas de catastrophe");
+            }
+
+            const uniqueRisks = [...new Set(risks)]; // Supprime les doublons
+            return uniqueRisks.length > 0 ? uniqueRisks.join(', ') : "Évaluation des risques spécifiques non disponible. Risques généraux liés au climat et à la géographie.";
+        }
+
+
+        // Fonction principale pour récupérer et afficher les informations d'un pays
+        async function getCountryInfo(countryName) {
+            const countryInfoDiv = document.getElementById('countryInfo');
+            const globalDashboardsDiv = document.getElementById('globalDashboards');
+            const messageDiv = document.getElementById('message');
+
+            countryInfoDiv.classList.add('hidden');
+            globalDashboardsDiv.classList.add('hidden'); // Masque les dashboards globaux
+            messageDiv.classList.add('hidden');
+            toggleLoadingCountry(true);
+
+            console.log(`Recherche du pays: ${countryName}`);
+
+            try {
+                // Tente de rechercher par le nom commun du pays (souvent en anglais ou en français)
+                let apiUrlFullText = `https://restcountries.com/v3.1/name/${countryName}?fullText=true`;
+                console.log(`URL de l'API RestCountries (fullText): ${apiUrlFullText}`);
+                let response = await fetch(apiUrlFullText);
+                let data = await response.json();
+
+                console.log(`Réponse de l'API RestCountries (fullText) - Statut: ${response.status}, ${response.statusText}`);
+                if (!response.ok || data.length === 0) {
+                    console.log("Recherche fullText échouée, tentative de recherche moins stricte.");
+                    let apiUrlLessStrict = `https://restcountries.com/v3.1/name/${countryName}`;
+                    console.log(`URL de l'API RestCountries (moins stricte): ${apiUrlLessStrict}`);
+                    response = await fetch(apiUrlLessStrict);
+                    data = await response.json();
+                    console.log(`Réponse de l'API RestCountries (moins stricte) - Statut: ${response.status}, ${response.statusText}`);
+                }
+                
+                if (!response.ok || data.length === 0) {
+                    if (response.status === 404) {
+                        displayMessage(`Pays "${countryName}" non trouvé. Veuillez vérifier l'orthographe (essayez en anglais si le français ne fonctionne pas).`, true);
+                    } else {
+                        throw new Error(`Erreur HTTP: ${response.status}`);
+                    }
+                    return;
+                }
+
+                const country = data[0]; // Prend le premier résultat
+                console.log("Données du pays reçues:", country);
+
+                // Récupération des risques spécifiques
+                const tsunamiRisk = getTsunamiRisk(country);
+                const generalRisks = getGeneralDisasterRisk(country);
+
+                // Contenu HTML pour les informations générales du pays
+                let countryHtml = `
+                    <div class="flex flex-col sm:flex-row items-center sm:items-start mb-6 gap-6">
+                        <img src="${country.flags.png}" alt="Drapeau de ${country.name.common}" class="w-40 h-auto rounded-lg shadow-md border border-gray-200">
+                        <h2 class="text-3xl font-bold text-gray-900">${country.name.common}</h2>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-4 text-lg mb-6">
+                        <p><b>Capitale:</b> ${country.capital ? country.capital[0] : 'N/A'}</p>
+                        <p><b>Région:</b> ${country.region}</p>
+                        <p><b>Sous-région:</b> ${country.subregion || 'N/A'}</p>
+                        <p><b>Population:</b> ${country.population.toLocaleString('fr-FR')}</p>
+                        <p><b>Superficie:</b> ${country.area.toLocaleString('fr-FR')} km²</p>
+                        <p><b>Langues:</b> ${Object.values(country.languages || {}).map(lang => lang.name || lang).join(', ') || 'N/A'}</p>
+                        <p><b>Monnaies:</b> ${Object.values(country.currencies || {}).map(c => c.name).join(', ') || 'N/A'}</p>
+                        <p><b>Fuseaux horaires:</b> ${country.timezones.join(', ')}</p>
+                        <p><b>Domaine de premier niveau:</b> ${country.tld ? country.tld[0] : 'N/A'}</p>
+                    </div>
+                `;
+
+                // Ajout des sections pour les données sismiques, météorologiques et les risques
+                countryHtml += `
+                    <div class="seismic-info mt-6 pt-6 border-t-2 border-gray-200">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Activité Sismique Récente</h3>
+                        <div id="seismicInfo"></div>
+                    </div>
+                    <div class="tsunami-risk mt-6 pt-6 border-t-2 border-gray-200">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Risque de Tsunami</h3>
+                        <div class="risk-item">
+                            <p><b>Niveau de risque:</b> <span class="font-semibold">${tsunamiRisk.level}</span></p>
+                            <p class="text-gray-700">${tsunamiRisk.reason}</p>
+                        </div>
+                    </div>
+                    <div class="general-disaster-risk mt-6 pt-6 border-t-2 border-gray-200">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Autres Risques de Catastrophes Naturelles</h3>
+                        <div class="risk-item">
+                            <p class="text-gray-700">${generalRisks}</p>
+                            <p class="text-sm text-gray-500 mt-2"><i>Note: Ces informations sont basées sur des évaluations géographiques et climatiques générales, et non sur des données en temps réel provenant d'APIs spécifiques pour chaque type de risque.</i></p>
+                        </div>
+                    </div>
+                    <div class="weather-forecast mt-6 pt-6 border-t-2 border-gray-200">
+                        <h3 class="text-2xl font-bold text-gray-800 mb-4">Prévisions Météorologiques</h3>
+                        <div id="weatherForecast"></div>
+                    </div>
+                    <div class="risk-disclaimer mt-6">
+                        <p><strong>Note sur les prévisions de catastrophes:</strong> Les informations présentées ici sont basées sur des données météorologiques et sismiques récentes et des prévisions générales. Il est impossible de prédire avec exactitude les catastrophes naturelles futures (séismes, tsunamis, ouragans spécifiques, etc.) ou d'attribuer un pourcentage de chance fiable à leur occurrence. Ces données doivent être utilisées à titre informatif et ne remplacent pas les avertissements officiels des autorités compétentes.</p>
+                    </div>
+                `;
+
+                countryInfoDiv.innerHTML = countryHtml;
+                countryInfoDiv.classList.remove('hidden');
+                displayMessage(`Informations pour ${country.name.common} chargées avec succès.`, false);
+
+                // Appeler les fonctions pour charger les données sismiques et météo après que le HTML soit inséré
+                if (country.latlng && country.latlng.length === 2) {
+                    fetchSeismicDataForCountry(country.latlng[0], country.latlng[1], country.name.common);
+                    fetchWeatherForecastForCountry(country.latlng[0], country.latlng[1]);
+                } else {
+                    document.getElementById('seismicInfo').innerHTML = `<p class="text-gray-600">Coordonnées de la capitale non disponibles pour l'activité sismique.</p>`;
+                    document.getElementById('weatherForecast').innerHTML = `<p class="text-red-500">Coordonnées de la capitale non disponibles pour les prévisions météorologiques. Veuillez noter que la clé API OpenWeatherMap doit être valide et activée pour que les prévisions fonctionnent.</p>`;
+                }
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération des informations du pays:', error);
+                displayMessage(`Une erreur est survenue lors du chargement des données. Détails: ${error.message}`, true);
+                globalDashboardsDiv.classList.remove('hidden'); // Réaffiche les dashboards globaux en cas d'erreur de recherche
+            } finally {
+                toggleLoadingCountry(false);
+            }
+        }
+
+        // Fonction pour charger les statistiques globales des séismes
+        async function loadGlobalEarthquakeStats() {
+            const topCountriesLoading = document.getElementById('topCountriesLoading');
+            const magnitudeLoading = document.getElementById('magnitudeLoading');
+            topCountriesLoading.textContent = "Chargement des données...";
+            magnitudeLoading.textContent = "Chargement des données...";
+
+            const today = new Date();
+            const thirtyDaysAgo = new Date();
+            thirtyDaysAgo.setDate(today.getDate() - 30);
+
+            const startDate = formatDate(thirtyDaysAgo);
+            const endDate = formatDate(today);
+
+            const usgsApiUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${startDate}&endtime=${endDate}&minmagnitude=2.5`;
+
+            try {
+                const response = await fetch(usgsApiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP globale: ${response.status}`);
+                }
+                const data = await response.json();
+
+                const countryCounts = {};
+                const magnitudeBins = {
+                    '2.5-3.9': 0,
+                    '4.0-4.9': 0,
+                    '5.0-5.9': 0,
+                    '6.0-6.9': 0,
+                    '7.0+': 0
+                };
+
+                data.features.forEach(eq => {
+                    // Compte par pays (utilise le dernier mot de 'place' comme pays simple)
+                    const placeParts = eq.properties.place ? eq.properties.place.split(', ') : [];
+                    const country = placeParts.length > 0 ? placeParts[placeParts.length - 1] : 'Inconnu';
+                    countryCounts[country] = (countryCounts[country] || 0) + 1;
+
+                    // Distribution des magnitudes
+                    const mag = eq.properties.mag;
+                    if (mag >= 7.0) magnitudeBins['7.0+']++;
+                    else if (mag >= 6.0) magnitudeBins['6.0-6.9']++;
+                    else if (mag >= 5.0) magnitudeBins['5.0-5.9']++;
+                    else if (mag >= 4.0) magnitudeBins['4.0-4.9']++;
+                    else if (mag >= 2.5) magnitudeBins['2.5-3.9']++;
+                });
+
+                // Tri des pays par nombre de séismes
+                const sortedCountries = Object.entries(countryCounts)
+                    .sort(([, countA], [, countB]) => countB - countA)
+                    .slice(0, 10); // Top 10
+
+                const topCountryLabels = sortedCountries.map(entry => entry[0]);
+                const topCountryData = sortedCountries.map(entry => entry[1]);
+
+                // Graphique Top 10 des Pays
+                if (topCountriesChartInstance) {
+                    topCountriesChartInstance.destroy();
+                }
+                const ctxTopCountries = document.getElementById('topCountriesChart').getContext('2d');
+                topCountriesChartInstance = new Chart(ctxTopCountries, {
+                    type: 'bar',
+                    data: {
+                        labels: topCountryLabels,
+                        datasets: [{
+                            label: 'Nombre de Séismes',
+                            data: topCountryData,
+                            backgroundColor: (context) => {
+                                const chart = context.chart;
+                                const { ctx, chartArea } = chart;
+                                if (!chartArea) return null;
+                                const gradient = ctx.createLinearGradient(0, chartArea.bottom, 0, chartArea.top);
+                                gradient.addColorStop(0, '#667eea'); // Deeper blue
+                                gradient.addColorStop(1, '#764ba2'); // Lighter purple
+                                return gradient;
+                            },
+                            borderColor: '#5a67d8',
+                            borderWidth: 1,
+                            borderRadius: 5, // Rounded corners for bars
+                            hoverBackgroundColor: '#5a67d8'
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            title: { 
+                                display: true, 
+                                text: 'Top 10 des Pays par Nombre de Séismes',
+                                font: { size: 18, family: 'Inter' },
+                                color: '#2d3748'
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleFont: { family: 'Inter', size: 14 },
+                                bodyFont: { family: 'Inter', size: 12 },
+                                padding: 10,
+                                displayColors: false
+                            }
+                        },
+                        scales: {
+                            y: { 
+                                beginAtZero: true, 
+                                title: { 
+                                    display: true, 
+                                    text: 'Nombre de Séismes',
+                                    font: { family: 'Inter', size: 14 },
+                                    color: '#4a5568'
+                                },
+                                ticks: { font: { family: 'Inter' }, color: '#4a5568' },
+                                grid: { color: '#e2e8f0' }
+                            },
+                            x: { 
+                                title: { 
+                                    display: true, 
+                                    text: 'Pays',
+                                    font: { family: 'Inter', size: 14 },
+                                    color: '#4a5568'
+                                },
+                                ticks: { font: { family: 'Inter' }, color: '#4a5568' },
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+                topCountriesLoading.textContent = ""; // Masque le message de chargement
+
+                // Graphique Distribution des Magnitudes
+                const magnitudeLabels = Object.keys(magnitudeBins);
+                const magnitudeData = Object.values(magnitudeBins);
+
+                if (magnitudeDistributionChartInstance) {
+                    magnitudeDistributionChartInstance.destroy();
+                }
+                const ctxMagnitude = document.getElementById('magnitudeDistributionChart').getContext('2d');
+                magnitudeDistributionChartInstance = new Chart(ctxMagnitude, {
+                    type: 'pie',
+                    data: {
+                        labels: magnitudeLabels,
+                        datasets: [{
+                            data: magnitudeData,
+                            backgroundColor: [
+                                '#34D399', // Green (similar to homepage button)
+                                '#FBBF24', // Yellow (similar to risk item)
+                                '#EF4444', // Red (similar to alert item)
+                                '#8B5CF6', // Purple
+                                '#DC2626'  // Darker Red
+                            ],
+                            borderColor: '#ffffff', // White border between segments
+                            borderWidth: 2,
+                            hoverOffset: 8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { 
+                                position: 'right',
+                                labels: {
+                                    font: { family: 'Inter', size: 12 },
+                                    color: '#4a5568'
+                                }
+                            },
+                            title: { 
+                                display: true, 
+                                text: 'Distribution des Magnitudes des Séismes',
+                                font: { size: 18, family: 'Inter' },
+                                color: '#2d3748'
+                            },
+                            tooltip: {
+                                backgroundColor: 'rgba(0,0,0,0.8)',
+                                titleFont: { family: 'Inter', size: 14 },
+                                bodyFont: { family: 'Inter', size: 12 },
+                                padding: 10,
+                                callbacks: {
+                                    label: function(context) {
+                                        let label = context.label || '';
+                                        if (label) {
+                                            label += ': ';
+                                        }
+                                        if (context.parsed !== null) {
+                                            label += context.parsed + ' séismes';
+                                        }
+                                        return label;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+                magnitudeLoading.textContent = ""; // Masque le message de chargement
+
+            } catch (error) {
+                console.error('Erreur lors du chargement des statistiques globales des séismes:', error);
+                topCountriesLoading.textContent = `Erreur: ${error.message}`;
+                magnitudeLoading.textContent = `Erreur: ${error.message}`;
+            }
+        }
+
+
+        // Écouteurs d'événements
+        document.addEventListener('DOMContentLoaded', () => {
+            const countryInput = document.getElementById('countryInput');
+            const searchButton = document.getElementById('searchButton');
+
+            // Charger les statistiques globales au chargement de la page
+            loadGlobalEarthquakeStats();
+
+            searchButton.addEventListener('click', () => {
+                const countryName = countryInput.value.trim();
+                if (countryName) {
+                    getCountryInfo(countryName);
+                } else {
+                    displayMessage("Veuillez entrer le nom d'un pays.", true);
+                }
+            });
+
+            countryInput.addEventListener('keypress', (event) => {
+                if (event.key === 'Enter') {
+                    searchButton.click();
+                }
+            });
+        });
+    </script>
+</body>
+</html>
