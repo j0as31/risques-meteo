@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte des Séismes en Temps Réel</title>
+    <!-- Inclure les fichiers CSS de Leaflet pour le style de la carte -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+    <!-- Inclure les fichiers CSS de Leaflet.markercluster pour le style des clusters -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css" />
+    <!-- Inclure Tailwind CSS pour un style moderne et responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: "Inter", sans-serif;
+            overflow-x: hidden; /* Prevent horizontal scroll */
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start;
+            min-height: 100vh;
+            background-color: #f0f4f8; /* Consistent background with the homepage */
+            position: relative; /* For logo positioning */
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Dégradé de bleu-violet */
+            color: white;
+            padding: 4rem 20px 2rem; /* Adjusted padding for map page */
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Ombre plus prononcée */
+            position: relative;
+            z-index: 1;
+        }
+        .hero-section h1 {
+            color: white; /* Ensure title is white on hero section */
+        }
+        .nav-button {
+            background: rgba(255, 255, 255, 0.15); /* Fond semi-transparent */
+            backdrop-filter: blur(5px); /* Effet de flou */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Bordure légère */
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.75rem;
+            border-radius: 9999px; /* Full rounded */
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        .nav-button.active {
+            background-color: #ffffff;
+            color: #667eea; /* Couleur du dégradé pour le texte actif */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            z-index: 30;
+        }
+        .logo-container svg {
+            border-radius: 0.75rem;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease-in-out;
+            background-color: #ffffff;
+            padding: 5px;
+        }
+        .logo-container svg:hover {
+            transform: scale(1.1);
+        }
+        
+        /* Style for the main content container */
+        .main-content-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 3.5rem;
+            width: 100%;
+            max-width: 1300px;
+            margin-top: -80px; /* Overlap with hero section */
+            position: relative;
+            z-index: 2;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Style for the date controls card (matching section-card on homepage) */
+        .section-card {
+            background-color: #fdfefe; /* Almost white for cards */
+            border-radius: 1.25rem; /* Even more rounded corners */
+            padding: 2.5rem;
+            margin-top: 2.5rem; /* Adjusted for placement below hero */
+            border: 1px solid #e0e7ee; /* Very light border */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08); /* Sharper shadow */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            width: 100%; /* Ensure it takes full width of its parent */
+            max-width: 900px; /* Limit width for aesthetics */
+            display: flex; /* Use flex for internal layout */
+            flex-wrap: wrap; /* Allow items to wrap on smaller screens */
+            justify-content: center; /* Center items */
+            align-items: center; /* Center items vertically */
+            gap: 1.5rem; /* Space between items */
+        }
+        .section-card:hover {
+            transform: translateY(-10px); /* More pronounced movement on hover */
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+        }
+
+        /* Style for the map */
+        #map {
+            height: 600px; /* Fixed height for the map */
+            width: 100%; /* Take full width of its container */
+            border-radius: 1.5rem; /* Match container border-radius */
+            margin-top: 2.5rem; /* Space below date controls */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* Soft shadow */
+            z-index: 0; /* Ensure map is behind overlays */
+        }
+
+        /* Styles for individual earthquake icons (to resemble previous circles) */
+        .earthquake-icon {
+            /* The outer div for the Leaflet icon. It acts as a container. */
+            opacity: 0.8;
+            display: flex; /* Use flex to center the inner circle */
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease-in-out; /* Smooth transition for hover */
+        }
+        .earthquake-icon:hover {
+            transform: scale(1.1); /* Slightly enlarge on hover */
+            opacity: 1;
+        }
+        .earthquake-icon > div { /* Target the inner div which is the actual colored circle */
+            border-radius: 50%; /* Make it circular */
+            border: 1px solid #000; /* Border for visibility */
+            box-shadow: 0 2px 5px rgba(0,0,0,0.2); /* Add a subtle shadow */
+            display: flex; /* To center magnitude text inside */
+            align-items: center;
+            justify-content: center;
+            color: white; /* Text color for magnitude */
+            font-weight: bold;
+        }
+        /* Loading message style */
+        #loading-message {
+            position: fixed; /* Use fixed for full screen overlay */
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: rgba(0, 0, 0, 0.9); /* Darker overlay */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50; /* High z-index to be on top */
+            color: white;
+            font-size: 2.5rem; /* Larger font */
+            font-weight: bold;
+            border-radius: 1rem; /* Rounded corners for the overlay */
+            transition: opacity 0.3s ease-in-out; /* Smooth fade in/out */
+        }
+        #loading-message.hidden {
+            opacity: 0;
+            pointer-events: none; /* Allow clicks through when hidden */
+        }
+
+        /* Error message style */
+        #status-message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #dc2626; /* Red background */
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 40;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            display: none; /* Hidden by default */
+        }
+        #status-message p {
+            margin-bottom: 0.5rem;
+        }
+        #status-message p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Navigation buttons for date controls */
+        .date-nav-button {
+            padding: 0.75rem 1.25rem;
+            background-color: #667eea; /* Blue from hero section */
+            color: white;
+            font-weight: bold;
+            border-radius: 0.75rem;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: none;
+            outline: none;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        .date-nav-button:hover {
+            background-color: #5a67d8; /* Darker blue on hover */
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+        }
+        .date-nav-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+        }
+        .date-nav-button.today-button {
+            background-color: #38a169; /* Green for today button */
+        }
+        .date-nav-button.today-button:hover {
+            background-color: #2f855a;
+        }
+
+        /* Button style matching homepage green button */
+        .load-data-button {
+            padding: 1rem 2.5rem;
+            background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%); /* Green gradient */
+            color: white;
+            font-weight: bold;
+            font-size: 1.25rem;
+            border-radius: 9999px; /* Fully rounded */
+            box-shadow: 0 6px 12px rgba(34, 197, 94, 0.3); /* Green shadow */
+            transition: all 0.3s ease-in-out;
+            cursor: pointer;
+            border: none;
+            outline: none;
+        }
+        .load-data-button:hover {
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 8px 16px rgba(34, 197, 94, 0.4);
+        }
+        .load-data-button:active {
+            transform: translateY(1px);
+            box-shadow: 0 2px 5px rgba(34, 197, 94, 0.2);
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Logo cliquable pour revenir à l'accueil -->
+    <div class="logo-container">
+        <a href="index.html">
+            <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6a1 1 0 10-2 0V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Accueil</span>
+        </a>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 animate-fade-in-up">
+            Carte des Séismes en Temps Réel
+        </h1>
+        <p class="text-xl md:text-2xl font-light mb-8 animate-fade-in-up delay-100">
+            Explorez l'activité sismique mondiale avec des données actualisées.
+        </p>
+        <!-- Barre de navigation intégrée à la hero section -->
+        <nav class="flex flex-wrap justify-center gap-4 animate-fade-in-up delay-200">
+            <a href="index.html" class="nav-button">
+                Accueil
+            </a>
+            <a href="earthquake_map.html" class="nav-button active">
+                Carte des Séismes
+            </a>
+            <a href="country_info.html" class="nav-button">
+                Informations sur les Pays
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main content container -->
+    <div class="main-content-container">
+        <!-- Date controls -->
+        <div class="section-card">
+            <button id="prevDayButton" class="date-nav-button">
+                &larr; Jour précédent
+            </button>
+            <div id="currentDateDisplay" class="text-gray-800 font-semibold text-xl text-center flex-grow">
+                Chargement de la date...
+            </div>
+            <button id="nextDayButton" class="date-nav-button">
+                Jour suivant &rarr;
+            </button>
+            <button id="todayButton" class="date-nav-button today-button">
+                Aujourd'hui
+            </button>
+            <button id="loadDataButton" class="load-data-button mt-4 sm:mt-0">
+                Charger les données
+            </button>
+        </div>
+
+        <!-- Div that will contain the Leaflet map -->
+        <div id="map"></div>
+
+        <!-- Loading message -->
+        <div id="loading-message" class="hidden">
+            Chargement des données sismiques...
+        </div>
+
+        <!-- Error/Information message -->
+        <div id="status-message" class="fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold hidden">
+            <!-- Error or information messages will be displayed here -->
+        </div>
+    </div>
+
+    <!-- Include Leaflet JavaScript files (MUST be after the map div) -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <!-- Include Leaflet.markercluster JavaScript files -->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+
+    <script>
+        // Declaration of a variable for the map and one for the earthquake layer group
+        let map;
+        let markers; // Variable for the clustered marker group
+        let currentEndDate; // Represents the end date of the 7-day window
+
+        // Utility function to format a date to YYYY-MM-DD format for API calls
+        function formatDateForAPI(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Utility function to format a date for display (e.g., "13 juil. 2025")
+        function formatDateForDisplay(date) {
+            return date.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short', year: 'numeric' });
+        }
+
+        // Function to display status messages (matching homepage style)
+        function showStatusMessage(message, isError = false) {
+            const statusMessageDiv = document.getElementById('status-message');
+            statusMessageDiv.textContent = message;
+            statusMessageDiv.className = `fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold ${isError ? 'bg-red-600' : 'bg-blue-600'} text-white`;
+            statusMessageDiv.classList.remove('hidden');
+            setTimeout(() => {
+                statusMessageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        // Function to toggle loading message visibility (matching homepage style)
+        function toggleLoading(show) {
+            document.getElementById('loading-message').classList.toggle('hidden', !show);
+        }
+
+        // Function to update the displayed date
+        function updateDateDisplay() {
+            document.getElementById('currentDateDisplay').textContent = formatDateForDisplay(currentEndDate);
+        }
+
+        // Main function to fetch and display earthquakes
+        async function fetchAndDisplayEarthquakes() {
+            toggleLoading(true); // Display loading message
+
+            const startDate = new Date(currentEndDate);
+            startDate.setDate(currentEndDate.getDate() - 7); // Calculate start date for the 7-day window
+
+            const usgsApiUrl = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&starttime=${formatDateForAPI(startDate)}&endtime=${formatDateForAPI(currentEndDate)}&minmagnitude=2.5`;
+
+            // --- DEBUGGING LOGS ---
+            console.log("Fetching earthquakes for:");
+            console.log("  Start Date (API Format):", formatDateForAPI(startDate));
+            console.log("  End Date (API Format):", formatDateForAPI(currentEndDate));
+            console.log("  API URL:", usgsApiUrl);
+            // --- END DEBUGGING LOGS ---
+
+            // If the marker group already exists, clear it before adding new data
+            if (markers) {
+                markers.clearLayers();
+            } else {
+                // Otherwise, create a new clustered marker group
+                markers = L.markerClusterGroup();
+                map.addLayer(markers); // Add the cluster group to the map
+            }
+
+            try {
+                const response = await fetch(usgsApiUrl);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}`);
+                }
+                const data = await response.json();
+
+                // Iterate over each earthquake and create a marker
+                data.features.forEach(feature => {
+                    const latlng = [feature.geometry.coordinates[1], feature.geometry.coordinates[0]];
+                    const magnitude = feature.properties.mag;
+                    const place = feature.properties.place;
+                    const time = new Date(feature.properties.time).toLocaleString('fr-FR'); // Format time for French locale
+                    const url = feature.properties.url;
+
+                    let color;
+                    let size; // Use 'size' for icon width/height
+
+                    // Define the color and size of the icon based on magnitude
+                    if (magnitude < 3.0) {
+                        color = '#4CAF50'; // Green
+                        size = 25; // Size in pixels
+                    } else if (magnitude < 5.0) {
+                        color = '#FFC107'; // Yellow/Orange
+                        size = 35;
+                    } else if (magnitude < 7.0) {
+                        color = '#FF5722'; // Orange/Red
+                        size = 45;
+                    } else {
+                        color = '#D32F2F'; // Dark red
+                        size = 55;
+                    }
+
+                    // Create a custom HTML icon for the marker (to resemble a circle)
+                    const earthquakeIcon = L.divIcon({
+                        className: 'earthquake-icon',
+                        // The inner div is the actual colored circle with magnitude text
+                        html: `<div style="background-color: ${color}; width: ${size}px; height: ${size}px; font-size: ${size * 0.4}px;">${magnitude.toFixed(1)}</div>`,
+                        iconSize: [size, size],
+                        iconAnchor: [size / 2, size / 2]
+                    });
+
+                    // Create a Leaflet marker with the custom icon
+                    const marker = L.marker(latlng, { icon: earthquakeIcon });
+
+                    // Add a popup that appears on click on the marker
+                    marker.bindPopup(`
+                        <div class="font-semibold text-gray-800">
+                            <b>Magnitude:</b> <span class="text-lg text-blue-700">${magnitude}</span><br>
+                            <b>Lieu:</b> ${place}<br>
+                            <b>Heure:</b> ${time}<br>
+                            <a href="${url}" target="_blank" class="text-blue-500 hover:underline">Plus d'infos</a>
+                        </div>
+                    `);
+
+                    markers.addLayer(marker); // Add the marker to the cluster group
+                });
+                showStatusMessage(`Chargement de ${data.features.length} séismes réussi.`, false);
+
+            } catch (error) {
+                console.error('Erreur lors de la récupération ou du traitement des données sismiques:', error);
+                showStatusMessage(`Désolé, une erreur est survenue lors du chargement des données sismiques. Détails: ${error.message}`, true);
+            } finally {
+                toggleLoading(false); // Hide loading message
+            }
+        }
+
+        // Event listeners for date navigation buttons
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialize the map centered at [0, 0] with a zoom level of 2
+            map = L.map('map').setView([0, 0], 2);
+
+            // Add OpenStreetMap tiles to the map
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Set initial date range to the last 7 days ending today
+            currentEndDate = new Date();
+            updateDateDisplay(); // Update display for the initial date
+            fetchAndDisplayEarthquakes(); // Load data for the initial range
+
+            document.getElementById('prevDayButton').addEventListener('click', () => {
+                currentEndDate.setDate(currentEndDate.getDate() - 1); // Move end date back by 1 day
+                updateDateDisplay();
+                fetchAndDisplayEarthquakes(); // Reload data for the new range
+            });
+
+            document.getElementById('nextDayButton').addEventListener('click', () => {
+                currentEndDate.setDate(currentEndDate.getDate() + 1); // Move end date forward by 1 day
+                updateDateDisplay();
+                fetchAndDisplayEarthquakes(); // Reload data for the new range
+            });
+
+            document.getElementById('todayButton').addEventListener('click', () => {
+                currentEndDate = new Date(); // Reset end date to today
+                updateDateDisplay();
+                fetchAndDisplayEarthquakes(); // Reload data for today's range
+            });
+
+            document.getElementById('loadDataButton').addEventListener('click', () => {
+                // This button now simply reloads data for the currently displayed range
+                fetchAndDisplayEarthquakes();
+            });
+        });
+    </script>
+</body>
+</html>
