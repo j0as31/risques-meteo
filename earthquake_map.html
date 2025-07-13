@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carte des Séismes</title>
+    <!-- Inclure Tailwind CSS pour un style moderne et responsif -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Inclure Leaflet CSS -->
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+        integrity="sha256-p4NxAoJBhIIN+hmNHrzxH1pfM+yjLkRzdwFXOGeD7Iu4="
+        crossorigin=""/>
+    <!-- Inclure Leaflet JS -->
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+        integrity="sha256-20nQCchB9co0qIjJZRGuk2/4K6pQzXefUprJxRBLwWY="
+        crossorigin=""></script>
+    <style>
+        body {
+            font-family: "Inter", sans-serif;
+            background-color: #f0f4f8; /* Consistent background with the homepage */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 0; /* Remove body padding for hero section */
+            position: relative;
+        }
+        .hero-section {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); /* Dégradé de bleu-violet */
+            color: white;
+            padding: 6rem 20px; /* Plus de padding pour un effet plus grand */
+            width: 100%;
+            text-align: center;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2); /* Ombre plus prononcée */
+            position: relative;
+            z-index: 1;
+        }
+        .hero-section h1 {
+            color: white; /* Ensure title is white on hero section */
+        }
+        .nav-button {
+            background: rgba(255, 255, 255, 0.15); /* Fond semi-transparent */
+            backdrop-filter: blur(5px); /* Effet de flou */
+            border: 1px solid rgba(255, 255, 255, 0.3); /* Bordure légère */
+            color: white;
+            font-weight: 600;
+            padding: 0.75rem 1.75rem;
+            border-radius: 9999px; /* Full rounded */
+            transition: all 0.3s ease-in-out;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+        .nav-button:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-3px) scale(1.02);
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+        }
+        .nav-button.active {
+            background-color: #ffffff;
+            color: #667eea; /* Couleur du dégradé pour le texte actif */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.2);
+            transform: scale(1.05);
+        }
+        .logo-container {
+            position: absolute;
+            top: 30px;
+            left: 30px;
+            z-index: 30;
+        }
+        .logo-container svg {
+            border-radius: 0.75rem;
+            box-shadow: 0 6px 10px rgba(0, 0, 0, 0.15);
+            transition: transform 0.2s ease-in-out;
+            background-color: #ffffff;
+            padding: 5px;
+        }
+        .logo-container svg:hover {
+            transform: scale(1.1);
+        }
+
+        /* Main content container style */
+        .main-content-container {
+            background-color: #ffffff;
+            border-radius: 1.5rem;
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+            padding: 3.5rem;
+            width: 100%;
+            max-width: 1300px;
+            margin-top: -80px; /* Overlap with hero section */
+            position: relative;
+            z-index: 2;
+            margin-bottom: 40px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* Section card style (consistent with homepage) */
+        .section-card {
+            background-color: #fdfefe; /* Almost white for cards */
+            border-radius: 1.25rem; /* Even more rounded corners */
+            padding: 2.5rem;
+            margin-top: 2.5rem;
+            border: 1px solid #e0e7ee; /* Very light border */
+            box-shadow: 0 8px 15px rgba(0, 0, 0, 0.08); /* Sharper shadow */
+            transition: transform 0.3s ease-in-out, box-shadow 0.3s ease-in-out;
+            width: 100%;
+        }
+        .section-card:hover {
+            transform: translateY(-10px); /* More pronounced movement on hover */
+            box-shadow: 0 20px 30px rgba(0, 0, 0, 0.15); /* Stronger shadow on hover */
+        }
+
+        /* Map specific styles */
+        #map {
+            height: 600px; /* Hauteur fixe pour la carte */
+            width: 100%;
+            border-radius: 1rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            margin-top: 2rem;
+        }
+        .info-box {
+            background-color: #ffffff;
+            padding: 1rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            border: 1px solid #e2e8f0;
+            margin-top: 1rem;
+            max-height: 200px; /* Limite la hauteur de la boîte d'info */
+            overflow-y: auto; /* Ajoute un défilement si le contenu dépasse */
+        }
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+        }
+        .legend-color-box {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 1px solid rgba(0,0,0,0.2);
+        }
+        /* Loading and message styles */
+        #loading-message-map {
+            position: fixed;
+            inset: 0;
+            background-color: rgba(0, 0, 0, 0.9);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            color: white;
+            font-size: 2.5rem;
+            font-weight: bold;
+            border-radius: 1rem;
+            transition: opacity 0.3s ease-in-out;
+        }
+        #loading-message-map.hidden {
+            opacity: 0;
+            pointer-events: none;
+        }
+        #message {
+            position: fixed;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background-color: #dc2626;
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+            z-index: 40;
+            font-size: 1.1rem;
+            font-weight: 600;
+            text-align: center;
+            display: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-100">
+    <!-- Clickable logo to return to homepage -->
+    <div class="logo-container">
+        <a href="index.html">
+            <svg class="w-16 h-16 text-blue-600" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm-1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l3 3a1 1 0 001.414-1.414L11 9.586V6a1 1 0 10-2 0V6z" clip-rule="evenodd"></path>
+            </svg>
+            <span class="sr-only">Accueil</span>
+        </a>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero-section">
+        <h1 class="text-5xl md:text-6xl font-extrabold mb-4 animate-fade-in-up">
+            Carte des Séismes
+        </h1>
+        <p class="text-xl md:text-2xl font-light mb-8 animate-fade-in-up delay-100">
+            Visualisez l'activité sismique mondiale en temps réel.
+        </p>
+        <!-- Barre de navigation intégrée à la hero section -->
+        <nav class="flex flex-wrap justify-center gap-4 animate-fade-in-up delay-200">
+            <a href="index.html" class="nav-button">
+                Accueil
+            </a>
+            <a href="earthquake_map.html" class="nav-button active">
+                Carte des Séismes
+            </a>
+            <a href="country_info.html" class="nav-button">
+                Informations sur les Pays
+            </a>
+        </nav>
+    </div>
+
+    <!-- Main content container -->
+    <div class="main-content-container">
+        <div class="section-card">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Activité Sismique Récente</h2>
+            <div class="flex flex-col md:flex-row gap-4 mb-6 items-center justify-center">
+                <label for="timeframeSelect" class="text-lg font-semibold text-gray-700">Période :</label>
+                <select id="timeframeSelect" class="p-2 border border-gray-300 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                    <option value="hour">Dernière heure</option>
+                    <option value="day">Dernières 24 heures</option>
+                    <option value="week">Derniers 7 jours</option>
+                    <option value="month" selected>Derniers 30 jours</option>
+                </select>
+                <label for="minMagnitudeSelect" class="text-lg font-semibold text-gray-700 ml-4">Magnitude min. :</label>
+                <select id="minMagnitudeSelect" class="p-2 border border-gray-300 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                    <option value="1">1.0+</option>
+                    <option value="2">2.0+</option>
+                    <option value="2.5" selected>2.5+</option>
+                    <option value="3">3.0+</option>
+                    <option value="4">4.0+</option>
+                    <option value="5">5.0+</option>
+                </select>
+            </div>
+
+            <div id="map"></div>
+
+            <div class="info-box mt-6">
+                <h3 class="text-xl font-bold text-gray-800 mb-2">Légende des Magnitudes:</h3>
+                <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2">
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: #00FF00;"></span><span>1.0 - 2.9 (Mineur)</span></div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: #ADFF2F;"></span><span>3.0 - 3.9 (Léger)</span></div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: #FFFF00;"></span><span>4.0 - 4.9 (Modéré)</span></div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: #FFA500;"></span><span>5.0 - 5.9 (Fort)</span></div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: #FF4500;"></span><span>6.0 - 6.9 (Très Fort)</span></div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: #FF0000;"></span><span>7.0 - 7.9 (Majeur)</span></div>
+                    <div class="legend-item"><span class="legend-color-box" style="background-color: #8B0000;"></span><span>8.0+ (Grand)</span></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Loading message for map -->
+        <div id="loading-message-map" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 text-white text-3xl font-bold rounded-lg hidden">
+            Chargement de la carte des séismes...
+        </div>
+
+        <!-- Error/Information message -->
+        <div id="message" class="fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold hidden">
+            <!-- Error or information messages will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        let map;
+        let earthquakeLayer; // Couche pour les marqueurs de séismes
+
+        function displayMessage(text, isError = false) {
+            const messageDiv = document.getElementById('message');
+            messageDiv.textContent = text;
+            messageDiv.className = `fixed bottom-6 left-1/2 -translate-x-1/2 p-4 rounded-lg shadow-xl z-50 text-xl font-semibold ${isError ? 'bg-red-600' : 'bg-blue-600'} text-white`;
+            messageDiv.classList.remove('hidden');
+            setTimeout(() => {
+                messageDiv.classList.add('hidden');
+            }, 5000);
+        }
+
+        function toggleLoadingMap(show) {
+            document.getElementById('loading-message-map').classList.toggle('hidden', !show);
+        }
+
+        // Fonction pour obtenir la couleur du cercle en fonction de la magnitude
+        function getColor(magnitude) {
+            return magnitude > 8.0 ? '#8B0000' : // Dark Red (Grand)
+                   magnitude > 7.0 ? '#FF0000' : // Red (Majeur)
+                   magnitude > 6.0 ? '#FF4500' : // Orange Red (Très Fort)
+                   magnitude > 5.0 ? '#FFA500' : // Orange (Fort)
+                   magnitude > 4.0 ? '#FFFF00' : // Yellow (Modéré)
+                   magnitude > 3.0 ? '#ADFF2F' : // Green Yellow (Léger)
+                                     '#00FF00'; // Green (Mineur)
+        }
+
+        // Fonction pour obtenir le rayon du cercle en fonction de la magnitude
+        function getRadius(magnitude) {
+            return magnitude * 4; // Ajustez ce multiplicateur pour changer la taille visuelle des cercles
+        }
+
+        // Fonction pour ajouter les séismes à la carte
+        function addEarthquakesToMap(earthquakes) {
+            // Supprime la couche précédente si elle existe
+            if (earthquakeLayer) {
+                map.removeLayer(earthquakeLayer);
+            }
+
+            const markers = [];
+            earthquakes.forEach(earthquake => {
+                const magnitude = earthquake.properties.mag;
+                const place = earthquake.properties.place;
+                const time = new Date(earthquake.properties.time).toLocaleString('fr-FR');
+                const url = earthquake.properties.url;
+                const coordinates = earthquake.geometry.coordinates; // [longitude, latitude, depth]
+
+                if (coordinates && coordinates.length >= 2) {
+                    const lat = coordinates[1];
+                    const lon = coordinates[0];
+
+                    const circleMarker = L.circleMarker([lat, lon], {
+                        radius: getRadius(magnitude),
+                        fillColor: getColor(magnitude),
+                        color: "#000",
+                        weight: 1,
+                        opacity: 1,
+                        fillOpacity: 0.7
+                    }).bindPopup(`
+                        <b>Magnitude:</b> ${magnitude}<br>
+                        <b>Lieu:</b> ${place}<br>
+                        <b>Heure:</b> ${time}<br>
+                        <a href="${url}" target="_blank">Détails USGS</a>
+                    `);
+                    markers.push(circleMarker);
+                }
+            });
+
+            // Ajoute tous les marqueurs à une nouvelle couche
+            earthquakeLayer = L.layerGroup(markers).addTo(map);
+        }
+
+        // Fonction pour récupérer les données de séismes
+        async function fetchEarthquakeData() {
+            toggleLoadingMap(true);
+            const timeframe = document.getElementById('timeframeSelect').value;
+            const minMagnitude = document.getElementById('minMagnitudeSelect').value;
+
+            let url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=${minMagnitude}`;
+
+            const now = new Date();
+            let startTime;
+
+            switch (timeframe) {
+                case 'hour':
+                    startTime = new Date(now.getTime() - 60 * 60 * 1000);
+                    break;
+                case 'day':
+                    startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                    break;
+                case 'week':
+                    startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+                    break;
+                case 'month':
+                    startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+                    break;
+            }
+
+            url += `&starttime=${startTime.toISOString()}&endtime=${now.toISOString()}`;
+
+            try {
+                const response = await fetch(url);
+                if (!response.ok) {
+                    throw new Error(`Erreur HTTP: ${response.status}`);
+                }
+                const data = await response.json();
+                addEarthquakesToMap(data.features);
+                displayMessage(`Chargement de ${data.features.length} séismes réussi.`, false);
+            } catch (error) {
+                console.error("Erreur lors de la récupération des données de séismes:", error);
+                displayMessage(`Erreur lors du chargement des données de séismes: ${error.message}`, true);
+            } finally {
+                toggleLoadingMap(false);
+            }
+        }
+
+        // Initialisation de la carte
+        document.addEventListener('DOMContentLoaded', () => {
+            // Initialise la carte et la centre sur une vue globale
+            map = L.map('map').setView([20, 0], 2); // Centré sur l'équateur, zoom 2
+
+            // Ajoute la couche de tuiles OpenStreetMap
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            }).addTo(map);
+
+            // Récupère les données initiales
+            fetchEarthquakeData();
+
+            // Écouteurs d'événements pour les sélecteurs
+            document.getElementById('timeframeSelect').addEventListener('change', fetchEarthquakeData);
+            document.getElementById('minMagnitudeSelect').addEventListener('change', fetchEarthquakeData);
+        });
+    </script>
+</body>
+</html>
