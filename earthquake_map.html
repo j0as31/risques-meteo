@@ -140,6 +140,43 @@
             margin-right: 10px;
             border: 1px solid rgba(0,0,0,0.2);
         }
+        /* Style pour les boutons de navigation de date/période */
+        .period-button {
+            background-color: #e2e8f0; /* Light gray */
+            color: #4a5568; /* Dark gray text */
+            padding: 0.75rem 1.25rem;
+            border-radius: 0.5rem;
+            font-weight: 600;
+            transition: all 0.2s ease-in-out;
+            cursor: pointer;
+            border: 1px solid #cbd5e0;
+        }
+        .period-button:hover {
+            background-color: #cbd5e0;
+            transform: translateY(-2px);
+        }
+        .period-button.active {
+            background-color: #667eea; /* Blue from hero section */
+            color: white;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+        .period-button.today {
+            background-color: #38a169; /* Green */
+            border-color: #2f855a;
+        }
+        .period-button.today:hover {
+            background-color: #2f855a;
+        }
+        .date-display {
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #2d3748; /* Dark gray */
+            margin: 0 1rem;
+            min-width: 250px; /* Assure une largeur suffisante pour la date de la semaine */
+            text-align: center;
+        }
+
         /* Loading and message styles */
         #loading-message-map {
             position: fixed;
@@ -207,6 +244,9 @@
             <a href="country_info.html" class="nav-button">
                 Informations sur les Pays
             </a>
+            <a href="tsunami_info.html" class="nav-button">
+                Informations sur les Tsunamis
+            </a>
         </nav>
     </div>
 
@@ -214,23 +254,37 @@
     <div class="main-content-container">
         <div class="section-card">
             <h2 class="text-3xl font-bold text-gray-800 mb-6 text-center">Activité Sismique Récente</h2>
-            <div class="flex flex-col md:flex-row gap-4 mb-6 items-center justify-center">
-                <label for="timeframeSelect" class="text-lg font-semibold text-gray-700">Période :</label>
-                <select id="timeframeSelect" class="p-2 border border-gray-300 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                    <option value="hour">Dernière heure</option>
-                    <option value="day">Dernières 24 heures</option>
-                    <option value="week">Derniers 7 jours</option>
-                    <option value="month" selected>Derniers 30 jours</option>
-                </select>
-                <label for="minMagnitudeSelect" class="text-lg font-semibold text-gray-700 ml-4">Magnitude min. :</label>
-                <select id="minMagnitudeSelect" class="p-2 border border-gray-300 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out">
-                    <option value="1">1.0+</option>
-                    <option value="2">2.0+</option>
-                    <option value="2.5" selected>2.5+</option>
-                    <option value="3">3.0+</option>
-                    <option value="4">4.0+</option>
-                    <option value="5">5.0+</option>
-                </select>
+            <div class="flex flex-col gap-4 mb-6 items-center justify-center">
+                <!-- Contrôles de navigation par semaine/mois/année -->
+                <div class="flex items-center justify-center gap-3">
+                    <button id="prevWeekButton" class="period-button" data-period="prev_week">← Semaine précédente</button>
+                    <span id="currentPeriodDisplay" class="date-display"></span>
+                    <button id="nextWeekButton" class="period-button" data-period="next_week">Semaine suivante →</button>
+                </div>
+                <div class="flex items-center justify-center gap-3 mt-2">
+                    <button id="thisWeekButton" class="period-button active" data-period="this_week">Cette semaine</button>
+                    <button id="thisMonthButton" class="period-button" data-period="this_month">Ce mois-ci</button>
+                    <button id="thisYearButton" class="period-button" data-period="this_year">Cette année</button>
+                </div>
+
+                <!-- Sélecteur de magnitude -->
+                <div class="flex items-center gap-3 mt-4">
+                    <label for="minMagnitudeSelect" class="text-lg font-semibold text-gray-700">Magnitude min. :</label>
+                    <select id="minMagnitudeSelect" class="p-2 border border-gray-300 rounded-md text-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition duration-150 ease-in-out">
+                        <option value="1">1.0+</option>
+                        <option value="2">2.0+</option>
+                        <option value="2.5" selected>2.5+</option>
+                        <option value="3">3.0+</option>
+                        <option value="4">4.0+</option>
+                        <option value="5">5.0+</option>
+                    </select>
+                </div>
+                
+                <!-- Bouton Charger les données -->
+                <button id="loadDataButton"
+                        class="px-6 py-3 bg-green-600 text-white font-bold rounded-lg shadow-lg hover:bg-green-700 focus:outline-none focus:ring-4 focus:ring-green-500 focus:ring-opacity-50 transition ease-in-out duration-300 transform hover:scale-105 mt-4">
+                    Charger les données
+                </button>
             </div>
 
             <div id="map"></div>
@@ -250,7 +304,7 @@
         </div>
 
         <!-- Loading message for map -->
-        <div id="loading-message-map" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-center z-50 text-white text-3xl font-bold rounded-lg hidden">
+        <div id="loading-message-map" class="fixed inset-0 bg-gray-900 bg-opacity-90 flex items-center justify-content: center; z-index: 50; color: white; font-size: 2.5rem; font-weight: bold; border-radius: 1rem; transition: opacity 0.3s ease-in-out; hidden">
             Chargement de la carte des séismes...
         </div>
 
@@ -263,6 +317,8 @@
     <script>
         let map;
         let earthquakeLayer; // Couche pour les marqueurs de séismes
+        let currentPeriodDate = new Date(); // Date de référence pour la période sélectionnée
+        let selectedPeriodType = 'this_week'; // Type de période sélectionné par défaut ('this_week', 'this_month', 'this_year')
 
         function displayMessage(text, isError = false) {
             const messageDiv = document.getElementById('message');
@@ -296,6 +352,7 @@
 
         // Fonction pour ajouter les séismes à la carte
         function addEarthquakesToMap(earthquakes) {
+            console.log("Adding", earthquakes.length, "earthquakes to map.");
             // Supprime la couche précédente si elle existe
             if (earthquakeLayer) {
                 map.removeLayer(earthquakeLayer);
@@ -332,50 +389,114 @@
 
             // Ajoute tous les marqueurs à une nouvelle couche
             earthquakeLayer = L.layerGroup(markers).addTo(map);
+            // Si aucun séisme n'est trouvé, ajustez la vue de la carte à une vue globale
+            if (earthquakes.length === 0) {
+                map.setView([20, 0], 2); // Centre sur l'équateur, zoom 2
+            } else {
+                // Ajuste la vue de la carte pour qu'elle contienne tous les marqueurs
+                const bounds = new L.LatLngBounds(markers.map(m => m.getLatLng()));
+                map.fitBounds(bounds, { padding: [50, 50] }); // Ajoute un peu de marge
+            }
+        }
+
+        // Fonction pour formater la date en YYYY-MM-DD
+        function formatDate(date) {
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        // Fonction pour obtenir le début de la semaine (lundi) pour une date donnée
+        function getStartOfWeek(date) {
+            const d = new Date(date);
+            const day = d.getDay(); // 0 for Sunday, 1 for Monday, etc.
+            const diff = d.getDate() - day + (day === 0 ? -6 : 1); // Adjust to Monday
+            d.setDate(diff);
+            d.setHours(0, 0, 0, 0);
+            return d;
+        }
+
+        // Fonction pour afficher la période actuelle
+        function updatePeriodDisplay() {
+            const displayElement = document.getElementById('currentPeriodDisplay');
+            const options = { day: 'numeric', month: 'short', year: 'numeric' };
+
+            if (selectedPeriodType === 'this_week') {
+                const startOfWeek = getStartOfWeek(currentPeriodDate);
+                const endOfWeek = new Date(startOfWeek);
+                endOfWeek.setDate(startOfWeek.getDate() + 6);
+                displayElement.textContent = `Semaine du ${startOfWeek.toLocaleDateString('fr-FR', options)} au ${endOfWeek.toLocaleDateString('fr-FR', options)}`;
+            } else if (selectedPeriodType === 'this_month') {
+                displayElement.textContent = `Mois de ${currentPeriodDate.toLocaleDateString('fr-FR', { month: 'long', year: 'numeric' })}`;
+            } else if (selectedPeriodType === 'this_year') {
+                displayElement.textContent = `Année ${currentPeriodDate.getFullYear()}`;
+            }
         }
 
         // Fonction pour récupérer les données de séismes
         async function fetchEarthquakeData() {
             toggleLoadingMap(true);
-            const timeframe = document.getElementById('timeframeSelect').value;
             const minMagnitude = document.getElementById('minMagnitudeSelect').value;
 
-            let url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=${minMagnitude}`;
-
-            const now = new Date();
             let startTime;
+            let endTime = new Date(); // Toujours jusqu'à maintenant
 
-            switch (timeframe) {
-                case 'hour':
-                    startTime = new Date(now.getTime() - 60 * 60 * 1000);
-                    break;
-                case 'day':
-                    startTime = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-                    break;
-                case 'week':
-                    startTime = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
-                    break;
-                case 'month':
-                    startTime = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-                    break;
+            if (selectedPeriodType === 'this_week') {
+                startTime = getStartOfWeek(currentPeriodDate);
+                endTime = new Date(startTime);
+                endTime.setDate(startTime.getDate() + 6);
+                endTime.setHours(23, 59, 59, 999);
+            } else if (selectedPeriodType === 'this_month') {
+                startTime = new Date(currentPeriodDate.getFullYear(), currentPeriodDate.getMonth(), 1);
+            } else if (selectedPeriodType === 'this_year') {
+                startTime = new Date(currentPeriodDate.getFullYear(), 0, 1);
+            } else {
+                // Fallback, devrait être géré par la logique des boutons
+                startTime = new Date(currentPeriodDate.getFullYear(), currentPeriodDate.getMonth(), currentPeriodDate.getDate());
+                endTime = new Date(startTime);
+                endTime.setDate(startTime.getDate() + 6); // Default to week if no type
+                endTime.setHours(23, 59, 59, 999);
             }
 
-            url += `&starttime=${startTime.toISOString()}&endtime=${now.toISOString()}`;
+            let url = `https://earthquake.usgs.gov/fdsnws/event/1/query?format=geojson&minmagnitude=${minMagnitude}`;
+            url += `&starttime=${formatDate(startTime)}&endtime=${formatDate(endTime)}`;
+
+            console.log("Fetching data for:", { start: formatDate(startTime), end: formatDate(endTime), minMagnitude: minMagnitude, periodType: selectedPeriodType });
+            console.log("USGS API URL:", url);
 
             try {
                 const response = await fetch(url);
+                console.log("USGS API Response Status:", response.status, response.statusText);
+
                 if (!response.ok) {
-                    throw new Error(`Erreur HTTP: ${response.status}`);
+                    const errorText = await response.text();
+                    throw new Error(`Erreur HTTP: ${response.status} - ${response.statusText}. Détails: ${errorText}`);
                 }
                 const data = await response.json();
-                addEarthquakesToMap(data.features);
-                displayMessage(`Chargement de ${data.features.length} séismes réussi.`, false);
+                console.log("Raw API data received:", data);
+
+                if (data.features && data.features.length > 0) {
+                    addEarthquakesToMap(data.features);
+                    displayMessage(`Chargement de ${data.features.length} séismes pour la période sélectionnée réussi.`, false);
+                } else {
+                    addEarthquakesToMap([]); // Clear existing markers
+                    displayMessage("Aucun séisme trouvé pour la période et la magnitude sélectionnées.", false);
+                }
             } catch (error) {
                 console.error("Erreur lors de la récupération des données de séismes:", error);
                 displayMessage(`Erreur lors du chargement des données de séismes: ${error.message}`, true);
             } finally {
                 toggleLoadingMap(false);
             }
+        }
+
+        // Fonction pour mettre à jour l'état actif des boutons de période
+        function updateActivePeriodButton(activeButtonId) {
+            document.querySelectorAll('.period-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            document.getElementById(activeButtonId).classList.add('active');
         }
 
         // Initialisation de la carte
@@ -388,12 +509,56 @@
                 attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
             }).addTo(map);
 
-            // Récupère les données initiales
-            fetchEarthquakeData();
+            // Gère les boutons de navigation par semaine
+            document.getElementById('prevWeekButton').addEventListener('click', () => {
+                currentPeriodDate.setDate(currentPeriodDate.getDate() - 7);
+                selectedPeriodType = 'this_week'; // Revenir à la sélection hebdomadaire
+                updatePeriodDisplay();
+                updateActivePeriodButton('thisWeekButton'); // Active le bouton "Cette semaine" si on navigue
+            });
 
-            // Écouteurs d'événements pour les sélecteurs
-            document.getElementById('timeframeSelect').addEventListener('change', fetchEarthquakeData);
+            document.getElementById('nextWeekButton').addEventListener('click', () => {
+                currentPeriodDate.setDate(currentPeriodDate.getDate() + 7);
+                selectedPeriodType = 'this_week'; // Revenir à la sélection hebdomadaire
+                updatePeriodDisplay();
+                updateActivePeriodButton('thisWeekButton'); // Active le bouton "Cette semaine" si on navigue
+            });
+
+            document.getElementById('thisWeekButton').addEventListener('click', () => {
+                currentPeriodDate = new Date(); // Réinitialise à la semaine actuelle
+                selectedPeriodType = 'this_week';
+                updatePeriodDisplay();
+                updateActivePeriodButton('thisWeekButton');
+            });
+
+            document.getElementById('thisMonthButton').addEventListener('click', () => {
+                currentPeriodDate = new Date(); // Réinitialise à la date actuelle pour le mois
+                selectedPeriodType = 'this_month';
+                updatePeriodDisplay();
+                updateActivePeriodButton('thisMonthButton');
+            });
+
+            document.getElementById('thisYearButton').addEventListener('click', () => {
+                currentPeriodDate = new Date(); // Réinitialise à la date actuelle pour l'année
+                selectedPeriodType = 'this_year';
+                updatePeriodDisplay();
+                updateActivePeriodButton('thisYearButton');
+            });
+
+
+            // Écouteur d'événement pour le bouton "Charger les données"
+            document.getElementById('loadDataButton').addEventListener('click', fetchEarthquakeData);
+
+            // Écouteur d'événement pour le sélecteur de magnitude (charge les données quand il change)
             document.getElementById('minMagnitudeSelect').addEventListener('change', fetchEarthquakeData);
+
+            // Met à jour l'affichage de la période au chargement
+            currentPeriodDate = getStartOfWeek(new Date()); // Assure que la semaine commence au lundi pour le défaut
+            updatePeriodDisplay();
+            updateActivePeriodButton('thisWeekButton'); // Active le bouton "Cette semaine" par défaut
+
+            // Charge les données initiales au chargement de la page (pour la semaine actuelle)
+            fetchEarthquakeData();
         });
     </script>
 </body>
